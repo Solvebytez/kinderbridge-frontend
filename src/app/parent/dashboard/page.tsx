@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useContactLogs } from "@/hooks/useContactLogs";
+import { useApplications } from "@/hooks/useApplications";
 import Navigation from "@/components/Navigation";
 import ContactLogDetailsModal from "@/components/ContactLogDetailsModal";
 import EditContactLogModal from "@/components/EditContactLogModal";
 import { formatDaycarePrice } from "@/utils/priceFormatter";
+import toast, { Toaster } from "react-hot-toast";
 import {
   MagnifyingGlassIcon,
   DocumentTextIcon,
@@ -49,6 +51,8 @@ export default function ParentDashboard() {
     favorites,
     isLoading: favoritesLoading,
     error: favoritesError,
+    removeFavorite,
+    isRemovingFavorite,
   } = useFavorites();
 
   const {
@@ -60,6 +64,12 @@ export default function ParentDashboard() {
     isDeletingContactLog,
   } = useContactLogs();
 
+  const {
+    applications: actualApplications,
+    deleteApplication,
+    isDeletingApplication,
+  } = useApplications();
+
   const [activeTab, setActiveTab] = useState("favorites");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [selectedContactLog, setSelectedContactLog] = useState<any>(null);
@@ -67,6 +77,9 @@ export default function ParentDashboard() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteType, setDeleteType] = useState<"contactLog" | "application" | null>(null);
+  const [openFavoriteDropdownId, setOpenFavoriteDropdownId] = useState<string | null>(null);
+  const [removeFavoriteId, setRemoveFavoriteId] = useState<string | null>(null);
 
   // Read tab from URL query parameter on mount
   useEffect(() => {
@@ -93,15 +106,73 @@ export default function ParentDashboard() {
     }
   }, [openDropdownId]);
 
+  // Close favorites dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openFavoriteDropdownId) {
+        setOpenFavoriteDropdownId(null);
+      }
+    };
+    if (openFavoriteDropdownId) {
+      // Use setTimeout to avoid immediate closure
+      setTimeout(() => {
+        document.addEventListener("click", handleClickOutside);
+      }, 0);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [openFavoriteDropdownId]);
+
   // Handle delete contact log
   const handleDeleteContactLog = (contactLogId: string) => {
     deleteContactLog(contactLogId, {
       onSuccess: () => {
         setDeleteConfirmId(null);
+        setDeleteType(null);
+        toast.success("Contact log deleted successfully");
       },
       onError: (error) => {
         console.error("Error deleting contact log:", error);
-        alert("Failed to delete contact log. Please try again.");
+        toast.error("Failed to delete contact log. Please try again.");
+      },
+    });
+  };
+
+  // Handle delete application
+  const handleDeleteApplication = (applicationId: string) => {
+    deleteApplication(applicationId, {
+      onSuccess: () => {
+        setDeleteConfirmId(null);
+        setDeleteType(null);
+        toast.success("Application deleted successfully");
+      },
+      onError: (error) => {
+        console.error("Error deleting application:", error);
+        toast.error("Failed to delete application. Please try again.");
+      },
+    });
+  };
+
+  // Handle delete (works for both contact logs and applications)
+  const handleDelete = () => {
+    if (!deleteConfirmId) return;
+    
+    if (deleteType === "application") {
+      handleDeleteApplication(deleteConfirmId);
+    } else {
+      handleDeleteContactLog(deleteConfirmId);
+    }
+  };
+
+  // Handle remove favorite
+  const handleRemoveFavorite = (daycareId: string) => {
+    removeFavorite(daycareId, {
+      onSuccess: () => {
+        setRemoveFavoriteId(null);
+        toast.success("Removed from favorites successfully");
+      },
+      onError: (error) => {
+        console.error("Error removing favorite:", error);
+        toast.error("Failed to remove favorite. Please try again.");
       },
     });
   };
@@ -397,7 +468,14 @@ export default function ParentDashboard() {
                   !favoritesError &&
                   savedSearches.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {savedSearches.map((search) => (
+                      {savedSearches.map((search, index) => {
+                        // Get the corresponding favorite object to access daycareId
+                        const favorite = favorites.find(
+                          (fav) =>
+                            (fav.daycare?._id || fav.daycare?.id || fav.daycareId) === search.id
+                        );
+                        const daycareId = favorite?.daycareId || search.id;
+                        return (
                         <div
                           key={search.id}
                           className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
@@ -419,9 +497,35 @@ export default function ParentDashboard() {
                               )}
                             </div>
                             <div className="absolute top-2 right-2">
-                              <button className="p-1 bg-white rounded-full shadow-sm hover:bg-gray-50">
-                                <EllipsisVerticalIcon className="h-4 w-4 text-gray-600" />
-                              </button>
+                              <div className="relative">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenFavoriteDropdownId(
+                                      openFavoriteDropdownId === search.id
+                                        ? null
+                                        : search.id
+                                    );
+                                  }}
+                                  className="p-1 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors"
+                                >
+                                  <EllipsisVerticalIcon className="h-4 w-4 text-gray-600" />
+                                </button>
+                                {openFavoriteDropdownId === search.id && (
+                                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRemoveFavoriteId(daycareId);
+                                        setOpenFavoriteDropdownId(null);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                      Remove from Favorites
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <div className="absolute top-2 left-2">
                               <span
@@ -454,7 +558,8 @@ export default function ParentDashboard() {
                             </Link>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
               </motion.div>
@@ -563,16 +668,31 @@ export default function ParentDashboard() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const log = contactLogs.find(
-                                        (log) =>
-                                          (log.daycare?._id ||
-                                            log.daycare?.id ||
-                                            log.daycareId) === application.id ||
-                                          log._id === application.id
+                                      // Check if it's an actual application from Application model
+                                      const actualApp = actualApplications?.find(
+                                        (app) => app._id === application.id || app._id === application.contactLogId
                                       );
-                                      if (log) {
-                                        setDeleteConfirmId(log._id);
+                                      
+                                      if (actualApp) {
+                                        // It's an actual application
+                                        setDeleteConfirmId(actualApp._id);
+                                        setDeleteType("application");
                                         setOpenDropdownId(null);
+                                      } else {
+                                        // It's a contact log
+                                        const log = contactLogs.find(
+                                          (log) =>
+                                            (log.daycare?._id ||
+                                              log.daycare?.id ||
+                                              log.daycareId) === application.id ||
+                                            log._id === application.id ||
+                                            log._id === application.contactLogId
+                                        );
+                                        if (log) {
+                                          setDeleteConfirmId(log._id);
+                                          setDeleteType("contactLog");
+                                          setOpenDropdownId(null);
+                                        }
                                       }
                                     }}
                                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
@@ -677,31 +797,90 @@ export default function ParentDashboard() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Delete Contact Log
+              Delete {deleteType === "application" ? "Application" : "Contact Log"}
             </h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this contact log? This action
+              Are you sure you want to delete this {deleteType === "application" ? "application" : "contact log"}? This action
               cannot be undone.
             </p>
             <div className="flex space-x-3 justify-end">
               <button
-                onClick={() => setDeleteConfirmId(null)}
+                onClick={() => {
+                  setDeleteConfirmId(null);
+                  setDeleteType(null);
+                }}
                 className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
-                disabled={isDeletingContactLog}
+                disabled={isDeletingContactLog || isDeletingApplication}
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleDeleteContactLog(deleteConfirmId)}
-                disabled={isDeletingContactLog}
+                onClick={handleDelete}
+                disabled={isDeletingContactLog || isDeletingApplication}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isDeletingContactLog ? "Deleting..." : "Delete"}
+                {(isDeletingContactLog || isDeletingApplication) ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Remove Favorite Confirmation Modal */}
+      {removeFavoriteId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Remove from Favorites
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to remove this daycare from your favorites? You can add it back anytime.
+            </p>
+            <div className="flex space-x-3 justify-end">
+              <button
+                onClick={() => setRemoveFavoriteId(null)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+                disabled={isRemovingFavorite}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRemoveFavorite(removeFavoriteId)}
+                disabled={isRemovingFavorite}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRemovingFavorite ? "Removing..." : "Remove"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#363636",
+            color: "#fff",
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
     </div>
   );
 }

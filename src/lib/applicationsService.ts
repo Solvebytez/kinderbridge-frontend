@@ -117,3 +117,22 @@ export const updateApplicationStatus = async (
   return response.data;
 };
 
+/**
+ * Delete an application
+ */
+export const deleteApplication = async (
+  applicationId: string
+): Promise<{
+  success: boolean;
+  data: { deleted: boolean; id: string };
+  message?: string;
+}> => {
+  const response = await apiClient.delete<{
+    success: boolean;
+    data: { deleted: boolean; id: string };
+    message?: string;
+  }>(`/api/applications/${applicationId}`);
+  return response.data;
+};
+
+

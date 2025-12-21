@@ -4,6 +4,7 @@ import {
   getUserApplications,
   createApplication,
   updateApplicationStatus,
+  deleteApplication,
   ApplicationResponse,
   CreateApplicationRequest,
 } from "@/lib/applicationsService";
@@ -61,6 +62,17 @@ export function useApplications() {
     },
   });
 
+  // Delete application mutation
+  const deleteApplicationMutation = useMutation({
+    mutationFn: (applicationId: string) => deleteApplication(applicationId),
+    onSuccess: () => {
+      // Invalidate and refetch applications
+      queryClient.invalidateQueries({
+        queryKey: ["applications", user?.userId],
+      });
+    },
+  });
+
   return {
     applications: applicationsResponse?.data || [],
     isLoading,
@@ -72,6 +84,10 @@ export function useApplications() {
     isCreatingApplication: createApplicationMutation.isPending,
     isUpdatingStatus: updateStatusMutation.isPending,
     createApplicationMutation, // Expose full mutation object for callbacks
+    deleteApplication: deleteApplicationMutation.mutate,
+    deleteApplicationAsync: deleteApplicationMutation.mutateAsync,
+    isDeletingApplication: deleteApplicationMutation.isPending,
   };
 }
+
 
