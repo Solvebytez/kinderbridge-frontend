@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Make all form input text darker and more visible */
+input, textarea, select {
+  color: #111827 !important; /* gray-900 - dark text for inputs */
+}
+
+/* Make all form placeholders darker and more visible */
+::placeholder {
+  color: #4b5563 !important; /* gray-600 - darker placeholder */
+  opacity: 1 !important;
+}
+
+::-webkit-input-placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+}
+
+::-moz-placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+}
+
+:-ms-input-placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+}
+
+/* Dark mode placeholder styling */
+@media (prefers-color-scheme: dark) {
+  ::placeholder {
+    color: #9ca3af !important; /* gray-400 for dark mode */
+    opacity: 1 !important;
+  }
+  
+  ::-webkit-input-placeholder {
+    color: #9ca3af !important;
+    opacity: 1 !important;
+  }
+  
+  ::-moz-placeholder {
+    color: #9ca3af !important;
+    opacity: 1 !important;
+  }
+  
+  :-ms-input-placeholder {
+    color: #9ca3af !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Custom video slider styles */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Video error message */
+.video-error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3B82F6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3B82F6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
