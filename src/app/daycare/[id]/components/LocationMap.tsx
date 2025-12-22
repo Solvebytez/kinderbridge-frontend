@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { GoogleMap, GoogleMarker, GoogleGeocoder, GoogleInfoWindow } from "@/types/google-maps";
 
 interface LocationMapProps {
   address: string;
   city: string;
   name?: string;
 }
-
-import type { GoogleMap, GoogleMarker, GoogleGeocoder, GoogleInfoWindow } from "@/types/google-maps";
 
 export default function LocationMap({ address, city, name }: LocationMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);

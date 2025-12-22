@@ -3,14 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Daycare } from "./SearchResults";
 import { formatDaycarePrice } from "../../../utils/priceFormatter";
+import type { GoogleMap, GoogleMarker, GoogleGeocoder, GoogleInfoWindow } from "@/types/google-maps";
 
 interface MapViewProps {
   daycares: Daycare[];
   onMarkerClick?: (daycare: Daycare) => void;
   isLoading?: boolean;
 }
-
-import type { GoogleMap, GoogleMarker, GoogleGeocoder, GoogleInfoWindow } from "@/types/google-maps";
 
 export default function MapView({
   daycares,
