@@ -10,6 +10,7 @@ import { useApplications } from "@/hooks/useApplications";
 import Navigation from "@/components/Navigation";
 import ContactLogDetailsModal from "@/components/ContactLogDetailsModal";
 import EditContactLogModal from "@/components/EditContactLogModal";
+import { ContactLogResponse } from "@/lib/contactLogsService";
 import { formatDaycarePrice } from "@/utils/priceFormatter";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -72,7 +73,7 @@ export default function ParentDashboard() {
 
   const [activeTab, setActiveTab] = useState("favorites");
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [selectedContactLog, setSelectedContactLog] = useState<Record<string, unknown> | null>(null);
+  const [selectedContactLog, setSelectedContactLog] = useState<ContactLogResponse | null>(null);
   const [isContactLogModalOpen, setIsContactLogModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -188,7 +189,10 @@ export default function ParentDashboard() {
       const daycareId = daycare._id || daycare.id || favorite.daycareId;
 
       // Format price
-      const price = formatDaycarePrice(daycare.price || daycare.monthlyFee, daycare.priceString);
+      const price = formatDaycarePrice(
+        daycare.price || daycare.monthlyFee,
+        daycare.priceString as string | null | undefined
+      );
 
       // Format location
       const location = daycare.address
@@ -255,7 +259,11 @@ export default function ParentDashboard() {
 
       // Format price
       let price = "$0/month";
-      price = formatDaycarePrice(daycare?.price || daycare?.monthlyFee, daycare?.priceString);
+      const priceValue = (daycare?.price || daycare?.monthlyFee) as number | string | null | undefined;
+      price = formatDaycarePrice(
+        priceValue,
+        daycare?.priceString as string | null | undefined
+      );
 
       // Map contact log purpose/outcome to application status
       let status: "pending" | "accepted" | "rejected" = "pending";
@@ -279,7 +287,7 @@ export default function ParentDashboard() {
         daycareName: daycare?.name || "KinderBridge",
         location,
         price,
-        image: daycare?.image || "/api/placeholder/400/300",
+        image: (daycare?.image as string | undefined) || "/api/placeholder/400/300",
         status,
         appliedDate: log.createdAt,
       };
@@ -627,7 +635,7 @@ export default function ParentDashboard() {
                                   setOpenDropdownId(
                                     openDropdownId === application.id
                                       ? null
-                                      : application.id
+                                      : String(application.id)
                                   );
                                 }}
                                 className="p-1 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors"

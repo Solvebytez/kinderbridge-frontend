@@ -35,11 +35,24 @@ declare global {
   interface Window {
     google: {
       maps: {
-        Map: new (element: HTMLElement, options: unknown) => GoogleMap;
-        Marker: new (options: unknown) => GoogleMarker;
-        Geocoder: new () => GoogleGeocoder;
-        LatLng: new (lat: number, lng: number) => unknown;
-        InfoWindow: new (options: unknown) => GoogleInfoWindow;
+        Map: new (element: HTMLElement, options: unknown) => any;
+        Marker: new (options: unknown) => any;
+        Geocoder: new () => any;
+        LatLng: new (lat: number, lng: number) => any;
+        LatLngBounds: new () => { extend: (location: { lat: number; lng: number }) => void };
+        SymbolPath: {
+          CIRCLE: any;
+        };
+        InfoWindow: new (options: unknown) => any;
+        places?: {
+          Autocomplete: new (
+            input: HTMLInputElement,
+            options?: unknown
+          ) => any;
+        };
+        event: {
+          clearInstanceListeners: (instance: unknown) => void;
+        };
       };
     };
   }
@@ -214,7 +227,6 @@ export default function LocationMap({ address, city, name }: LocationMapProps) {
                 map: mapInstanceRef.current,
                 title: name || address,
               });
-            }
 
               // Create info window
               if (infoWindowRef.current) {
@@ -234,7 +246,7 @@ export default function LocationMap({ address, city, name }: LocationMapProps) {
               });
 
               // Open info window by default
-              if (mapInstanceRef.current && markerRef.current) {
+              if (markerRef.current) {
                 infoWindowRef.current.open(
                   mapInstanceRef.current,
                   markerRef.current

@@ -18,6 +18,15 @@ declare global {
   interface Window {
     google: {
       maps: {
+        Map: new (element: HTMLElement, options: unknown) => any;
+        Marker: new (options: unknown) => any;
+        Geocoder: new () => any;
+        LatLng: new (lat: number, lng: number) => any;
+        LatLngBounds: new () => { extend: (location: { lat: number; lng: number }) => void };
+        SymbolPath: {
+          CIRCLE: any;
+        };
+        InfoWindow: new (options: unknown) => any;
         places: {
           Autocomplete: new (
             input: HTMLInputElement,
@@ -25,7 +34,7 @@ declare global {
           ) => AutocompleteInstance;
         };
         event: {
-          clearInstanceListeners: (instance: AutocompleteInstance) => void;
+          clearInstanceListeners: (instance: unknown) => void;
         };
       };
     };

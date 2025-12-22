@@ -150,12 +150,22 @@ export default function RegisterPage() {
     setShowPreferencesModal(true);
   };
 
-  const handlePreferencesContinue = async (preferences: Record<string, unknown>) => {
+  const handlePreferencesContinue = async (preferences: {
+    email: boolean;
+    sms: boolean;
+    promotional: boolean;
+    acknowledgement: boolean;
+  }) => {
     // Add communication preferences to registration data
+    if (!pendingRegistrationData) {
+      console.error("Pending registration data is missing");
+      return;
+    }
+    
     const finalRegistrationData = {
       ...pendingRegistrationData,
       communicationPreferences: preferences,
-    };
+    } as Parameters<typeof registerMutation.mutate>[0];
 
     // Use React Query mutation
     setIsRegistering(true); // Set flag to prevent useEffect redirect
@@ -213,7 +223,7 @@ export default function RegisterPage() {
         const errorMessage =
           errorResponse?.response?.data?.error ||
           errorResponse?.response?.data?.details?.join(", ") ||
-          error?.message ||
+          (error instanceof Error ? error.message : undefined) ||
           "An error occurred during registration";
         toast.error(errorMessage);
         setIsRegistering(false); // Reset flag on error

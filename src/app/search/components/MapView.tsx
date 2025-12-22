@@ -38,15 +38,21 @@ declare global {
   interface Window {
     google: {
       maps: {
-        Map: new (element: HTMLElement, options: unknown) => GoogleMap;
-        Marker: new (options: unknown) => GoogleMarker;
-        Geocoder: new () => GoogleGeocoder;
-        LatLng: new (lat: number, lng: number) => unknown;
+        Map: new (element: HTMLElement, options: unknown) => any;
+        Marker: new (options: unknown) => any;
+        Geocoder: new () => any;
+        LatLng: new (lat: number, lng: number) => any;
         LatLngBounds: new () => { extend: (location: { lat: number; lng: number }) => void };
         SymbolPath: {
-          CIRCLE: unknown;
+          CIRCLE: any;
         };
-        InfoWindow: new (options: unknown) => GoogleInfoWindow;
+        InfoWindow: new (options: unknown) => any;
+        places?: {
+          Autocomplete: new (
+            input: HTMLInputElement,
+            options?: unknown
+          ) => any;
+        };
         event: {
           clearInstanceListeners: (instance: unknown) => void;
         };

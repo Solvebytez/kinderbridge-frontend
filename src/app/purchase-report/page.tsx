@@ -228,10 +228,10 @@ function CheckoutForm() {
 
           console.log("📡 Save response status:", saveResponse.status);
 
-          const saveData = await saveResponse.json();
+          const saveData = saveResponse.data;
           console.log("📦 Save response data:", saveData);
 
-          if (saveResponse.ok && saveData.success) {
+          if (saveResponse.status === 200 && saveData.success) {
             console.log("✅ Purchase saved successfully");
             setSuccess(true);
             // Redirect to success page after confirming purchase is saved
