@@ -199,51 +199,58 @@ export default function LocationMap({ address, city, name }: LocationMapProps) {
             const lng = location.lng();
 
             // Center map on location
-            mapInstanceRef.current.setCenter({ lat, lng });
-            mapInstanceRef.current.setZoom(15);
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.setCenter({ lat, lng });
+              mapInstanceRef.current.setZoom(15);
 
-            // Remove existing marker
-            if (markerRef.current) {
-              markerRef.current.setMap(null);
+              // Remove existing marker
+              if (markerRef.current) {
+                markerRef.current.setMap(null);
+              }
+
+              // Create marker
+              markerRef.current = new window.google.maps.Marker({
+                position: { lat, lng },
+                map: mapInstanceRef.current,
+                title: name || address,
+              });
             }
 
-            // Create marker
-            markerRef.current = new window.google.maps.Marker({
-              position: { lat, lng },
-              map: mapInstanceRef.current,
-              title: name || address,
-            });
+              // Create info window
+              if (infoWindowRef.current) {
+                infoWindowRef.current.close();
+              }
 
-            // Create info window
-            if (infoWindowRef.current) {
-              infoWindowRef.current.close();
+              const infoContent = `
+                <div style="padding: 8px;">
+                  <strong>${name || "Location"}</strong><br/>
+                  <span>${address}</span><br/>
+                  <span>${city}, ON</span>
+                </div>
+              `;
+
+              infoWindowRef.current = new window.google.maps.InfoWindow({
+                content: infoContent,
+              });
+
+              // Open info window by default
+              if (mapInstanceRef.current && markerRef.current) {
+                infoWindowRef.current.open(
+                  mapInstanceRef.current,
+                  markerRef.current
+                );
+
+                // Add click listener to marker
+                markerRef.current.addListener("click", () => {
+                  if (mapInstanceRef.current && markerRef.current && infoWindowRef.current) {
+                    infoWindowRef.current.open(
+                      mapInstanceRef.current,
+                      markerRef.current
+                    );
+                  }
+                });
+              }
             }
-
-            const infoContent = `
-              <div style="padding: 8px;">
-                <strong>${name || "Location"}</strong><br/>
-                <span>${address}</span><br/>
-                <span>${city}, ON</span>
-              </div>
-            `;
-
-            infoWindowRef.current = new window.google.maps.InfoWindow({
-              content: infoContent,
-            });
-
-            // Open info window by default
-            infoWindowRef.current.open(
-              mapInstanceRef.current,
-              markerRef.current
-            );
-
-            // Add click listener to marker
-            markerRef.current.addListener("click", () => {
-              infoWindowRef.current.open(
-                mapInstanceRef.current,
-                markerRef.current
-              );
-            });
           } else {
             console.error("Geocoding failed:", status);
             setError("Could not find location");
