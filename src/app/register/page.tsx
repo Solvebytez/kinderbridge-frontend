@@ -46,7 +46,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [pendingRegistrationData, setPendingRegistrationData] =
-    useState<any>(null);
+    useState<Record<string, unknown> | null>(null);
   const [isRegistering, setIsRegistering] = useState(false); // Track if registration is in progress
   const { user, isLoading: authLoading, checkAuth } = useAuth();
   const router = useRouter();
@@ -150,7 +150,7 @@ export default function RegisterPage() {
     setShowPreferencesModal(true);
   };
 
-  const handlePreferencesContinue = async (preferences: any) => {
+  const handlePreferencesContinue = async (preferences: Record<string, unknown>) => {
     // Add communication preferences to registration data
     const finalRegistrationData = {
       ...pendingRegistrationData,
@@ -208,10 +208,11 @@ export default function RegisterPage() {
         // Reset flag (though we're doing full page reload, so this won't matter)
         setIsRegistering(false);
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
+        const errorResponse = error as { response?: { data?: { error?: string; details?: string[] } } };
         const errorMessage =
-          error?.response?.data?.error ||
-          error?.response?.data?.details?.join(", ") ||
+          errorResponse?.response?.data?.error ||
+          errorResponse?.response?.data?.details?.join(", ") ||
           error?.message ||
           "An error occurred during registration";
         toast.error(errorMessage);

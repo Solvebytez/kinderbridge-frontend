@@ -10,20 +10,45 @@ interface MapViewProps {
   isLoading?: boolean;
 }
 
+// Google Maps types
+type GoogleMap = {
+  setCenter: (center: { lat: number; lng: number } | unknown) => void;
+  setZoom: (zoom: number) => void;
+  fitBounds: (bounds: unknown) => void;
+};
+
+type GoogleMarker = {
+  setMap: (map: GoogleMap | null) => void;
+  addListener: (event: string, callback: () => void) => void;
+  getPosition: () => { lat: () => number; lng: () => number } | null;
+};
+
+type GoogleGeocoder = {
+  geocode: (
+    request: { address: string },
+    callback: (results: unknown, status: string) => void
+  ) => void;
+};
+
+type GoogleInfoWindow = {
+  open: (map: GoogleMap, marker: GoogleMarker) => void;
+};
+
 declare global {
   interface Window {
     google: {
       maps: {
-        Map: new (element: HTMLElement, options: any) => any;
-        Marker: new (options: any) => any;
-        Geocoder: new () => any;
-        LatLng: new (lat: number, lng: number) => any;
-        LatLngBounds: new () => any;
+        Map: new (element: HTMLElement, options: unknown) => GoogleMap;
+        Marker: new (options: unknown) => GoogleMarker;
+        Geocoder: new () => GoogleGeocoder;
+        LatLng: new (lat: number, lng: number) => unknown;
+        LatLngBounds: new () => { extend: (location: { lat: number; lng: number }) => void };
         SymbolPath: {
-          CIRCLE: any;
+          CIRCLE: unknown;
         };
+        InfoWindow: new (options: unknown) => GoogleInfoWindow;
         event: {
-          clearInstanceListeners: (instance: any) => void;
+          clearInstanceListeners: (instance: unknown) => void;
         };
       };
     };
@@ -36,9 +61,9 @@ export default function MapView({
   isLoading = false,
 }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
-  const geocoderRef = useRef<any>(null);
+  const mapInstanceRef = useRef<GoogleMap | null>(null);
+  const markersRef = useRef<GoogleMarker[]>([]);
+  const geocoderRef = useRef<GoogleGeocoder | null>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [geocodingProgress, setGeocodingProgress] = useState(0);
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -163,7 +188,7 @@ export default function MapView({
 
     try {
       const map = new window.google.maps.Map(mapRef.current, {
-        center: { lat: 43.6532, lng: -79.3832 } as any, // Toronto center
+        center: { lat: 43.6532, lng: -79.3832 },
         zoom: 10,
         styles: [
           {
@@ -171,7 +196,7 @@ export default function MapView({
             elementType: "labels",
             stylers: [{ visibility: "off" }],
           },
-        ] as any,
+        ],
       });
 
       mapInstanceRef.current = map;
@@ -228,7 +253,7 @@ export default function MapView({
         position: {
           lat: daycare.coordinates.lat,
           lng: daycare.coordinates.lng,
-        } as any,
+        },
         map: map,
         title: daycare.name,
         icon: {
@@ -238,7 +263,7 @@ export default function MapView({
           fillOpacity: 1,
           strokeColor: "#FFFFFF",
           strokeWeight: 2,
-        } as any,
+        },
       });
 
       if (onMarkerClick) {
@@ -248,9 +273,8 @@ export default function MapView({
       }
 
       // Add info window
-      const InfoWindow = (window.google.maps as any).InfoWindow;
       const formattedPrice = formatDaycarePrice(daycare.price, daycare.priceString);
-      const infoWindow = new InfoWindow({
+      const infoWindow = new window.google.maps.InfoWindow({
         content: `
           <div style="padding: 8px; min-width: 200px;">
             <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${daycare.name}</h3>
@@ -295,7 +319,7 @@ export default function MapView({
 
                 // Create marker
                 const marker = new window.google.maps.Marker({
-                  position: { lat, lng } as any,
+                  position: { lat, lng },
                   map: map,
                   title: daycare.name,
                   icon: {
@@ -305,7 +329,7 @@ export default function MapView({
                     fillOpacity: 1,
                     strokeColor: "#FFFFFF",
                     strokeWeight: 2,
-                  } as any,
+                  },
                 });
 
                 if (onMarkerClick) {
@@ -315,9 +339,8 @@ export default function MapView({
                 }
 
                 // Add info window
-                const InfoWindow = (window.google.maps as any).InfoWindow;
                 const formattedPrice = formatDaycarePrice(daycare.price, daycare.priceString);
-                const infoWindow = new InfoWindow({
+                const infoWindow = new window.google.maps.InfoWindow({
                   content: `
                     <div style="padding: 8px; min-width: 200px;">
                       <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${daycare.name}</h3>

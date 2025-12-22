@@ -72,7 +72,7 @@ export default function ParentDashboard() {
 
   const [activeTab, setActiveTab] = useState("favorites");
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [selectedContactLog, setSelectedContactLog] = useState<any>(null);
+  const [selectedContactLog, setSelectedContactLog] = useState<Record<string, unknown> | null>(null);
   const [isContactLogModalOpen, setIsContactLogModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);

@@ -22,7 +22,7 @@ export interface FavoriteResponse {
     image?: string;
     status?: string;
     availability?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

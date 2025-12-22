@@ -31,7 +31,7 @@ interface ContactLog {
     name?: string;
     address?: string;
     city?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -260,4 +260,3 @@ export default function ContactLogDetailsModal({
     </AnimatePresence>
   );
 }
-

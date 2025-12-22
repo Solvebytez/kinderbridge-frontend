@@ -30,7 +30,7 @@ export interface ApplicationResponse {
     price?: string;
     monthlyFee?: number;
     image?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -134,5 +134,3 @@ export const deleteApplication = async (
   }>(`/api/applications/${applicationId}`);
   return response.data;
 };
-
-

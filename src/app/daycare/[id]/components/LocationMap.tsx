@@ -8,15 +8,38 @@ interface LocationMapProps {
   name?: string;
 }
 
+// Google Maps types
+type GoogleMap = {
+  setCenter: (center: { lat: number; lng: number }) => void;
+  setZoom: (zoom: number) => void;
+};
+
+type GoogleMarker = {
+  setMap: (map: GoogleMap | null) => void;
+  addListener: (event: string, callback: () => void) => void;
+};
+
+type GoogleGeocoder = {
+  geocode: (
+    request: { address: string },
+    callback: (results: unknown, status: string) => void
+  ) => void;
+};
+
+type GoogleInfoWindow = {
+  close: () => void;
+  open: (map: GoogleMap, marker: GoogleMarker) => void;
+};
+
 declare global {
   interface Window {
     google: {
       maps: {
-        Map: new (element: HTMLElement, options: any) => any;
-        Marker: new (options: any) => any;
-        Geocoder: new () => any;
-        LatLng: new (lat: number, lng: number) => any;
-        InfoWindow: new (options: any) => any;
+        Map: new (element: HTMLElement, options: unknown) => GoogleMap;
+        Marker: new (options: unknown) => GoogleMarker;
+        Geocoder: new () => GoogleGeocoder;
+        LatLng: new (lat: number, lng: number) => unknown;
+        InfoWindow: new (options: unknown) => GoogleInfoWindow;
       };
     };
   }
@@ -24,10 +47,10 @@ declare global {
 
 export default function LocationMap({ address, city, name }: LocationMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
-  const geocoderRef = useRef<any>(null);
-  const infoWindowRef = useRef<any>(null);
+  const mapInstanceRef = useRef<GoogleMap | null>(null);
+  const markerRef = useRef<GoogleMarker | null>(null);
+  const geocoderRef = useRef<GoogleGeocoder | null>(null);
+  const infoWindowRef = useRef<GoogleInfoWindow | null>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,10 +190,11 @@ export default function LocationMap({ address, city, name }: LocationMapProps) {
 
       geocoderRef.current.geocode(
         { address: fullAddress },
-        (results: any, status: string) => {
+        (results: unknown, status: string) => {
           setIsLoading(false);
-          if (status === "OK" && results && results[0]) {
-            const location = results[0].geometry.location;
+          if (status === "OK" && results && Array.isArray(results) && results[0]) {
+            const result = results[0] as { geometry: { location: { lat: () => number; lng: () => number } } };
+            const location = result.geometry.location;
             const lat = location.lat();
             const lng = location.lng();
 
@@ -248,4 +272,5 @@ export default function LocationMap({ address, city, name }: LocationMapProps) {
     </div>
   );
 }
+
 

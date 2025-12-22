@@ -126,7 +126,7 @@ async function refreshTokenIfNeeded(
 
   const now = Date.now();
   const cacheKey = refreshToken;
-  let cachedData = tokenCache.get(cacheKey);
+  const cachedData = tokenCache.get(cacheKey);
 
   // Check if we have valid cached data
   if (cachedData && cachedData.expires > now) {
@@ -459,7 +459,9 @@ export async function middleware(request: NextRequest) {
           const userType = cachedData.data?.data?.user?.userType;
           const userEmail = cachedData.data?.data?.user?.email;
           if (userType && userEmail) {
-            console.log("✅ User already authenticated, redirecting to /search");
+            console.log(
+              "✅ User already authenticated, redirecting to /search"
+            );
             return NextResponse.redirect(new URL("/search", request.url));
           }
         }
@@ -490,9 +492,10 @@ export async function middleware(request: NextRequest) {
 
             if (userType && userEmail) {
               console.log("✅ User authenticated, redirecting to /search");
-              
+
               // Cache the response
-              const userId = refreshData.data?.user?._id || refreshData.data?.user?.id;
+              const userId =
+                refreshData.data?.user?._id || refreshData.data?.user?.id;
               const stableCacheKey = userId || refreshToken;
               tokenCache.set(stableCacheKey, {
                 data: refreshData,

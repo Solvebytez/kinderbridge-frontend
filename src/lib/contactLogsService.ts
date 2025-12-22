@@ -22,7 +22,7 @@ export interface ContactLogResponse {
     name?: string;
     address?: string;
     city?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -120,5 +120,3 @@ export const deleteContactLog = async (
   }>(`/api/contact-logs/${contactLogId}`);
   return response.data;
 };
-
-

@@ -33,7 +33,7 @@ interface ContactLog {
     name?: string;
     address?: string;
     city?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -71,7 +71,7 @@ interface Daycare {
   price?: string | number;
   priceString?: string;
   rating?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export default function EditContactLogModal({
@@ -310,10 +310,11 @@ export default function EditContactLogModal({
           onClose();
           setError(null);
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
+          const errorResponse = err as { response?: { data?: { error?: string; message?: string } } };
           setError(
-            err?.response?.data?.error ||
-              err?.response?.data?.message ||
+            errorResponse?.response?.data?.error ||
+              errorResponse?.response?.data?.message ||
               "Failed to update contact log. Please try again."
           );
         },

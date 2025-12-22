@@ -47,21 +47,21 @@ export interface SearchResponse {
   };
 }
 
-import { apiClient } from './api';
+import { apiClient } from "./api";
 
 class DaycareService {
   // Get all daycares
   async getAllDaycares(): Promise<Daycare[]> {
     try {
-      const response = await apiClient.get('/api/daycares');
-      
+      const response = await apiClient.get("/api/daycares");
+
       if (response.data.success) {
         return response.data.data;
       } else {
-        throw new Error(response.data.message || 'Failed to fetch daycares');
+        throw new Error(response.data.message || "Failed to fetch daycares");
       }
     } catch (error) {
-      console.error('Error fetching daycares:', error);
+      console.error("Error fetching daycares:", error);
       throw error;
     }
   }
@@ -69,8 +69,8 @@ class DaycareService {
   // Search daycares with filters
   async searchDaycares(filters: SearchFilters): Promise<SearchResponse> {
     try {
-      const params: any = {};
-      
+      const params: Record<string, string | number | boolean | undefined> = {};
+
       if (filters.q) params.q = filters.q;
       if (filters.location) params.location = filters.location;
       if (filters.priceMin) params.priceMin = filters.priceMin;
@@ -78,15 +78,15 @@ class DaycareService {
       if (filters.availability) params.availability = filters.availability;
       if (filters.ageRange) params.ageRange = filters.ageRange;
 
-      const response = await apiClient.get('/api/daycares/search', { params });
-      
+      const response = await apiClient.get("/api/daycares/search", { params });
+
       if (response.data.success) {
         return response.data;
       } else {
-        throw new Error(response.data.message || 'Search failed');
+        throw new Error(response.data.message || "Search failed");
       }
     } catch (error) {
-      console.error('Error searching daycares:', error);
+      console.error("Error searching daycares:", error);
       throw error;
     }
   }
@@ -95,14 +95,14 @@ class DaycareService {
   async getDaycareById(id: string): Promise<Daycare> {
     try {
       const response = await apiClient.get(`/api/daycares/detail/${id}`);
-      
+
       if (response.data.success) {
         return response.data.data;
       } else {
-        throw new Error(response.data.message || 'Daycare not found');
+        throw new Error(response.data.message || "Daycare not found");
       }
     } catch (error) {
-      console.error('Error fetching daycare:', error);
+      console.error("Error fetching daycare:", error);
       throw error;
     }
   }
@@ -110,15 +110,15 @@ class DaycareService {
   // Get all unique locations
   async getLocations(): Promise<string[]> {
     try {
-      const response = await apiClient.get('/api/daycares/locations/all');
-      
+      const response = await apiClient.get("/api/daycares/locations/all");
+
       if (response.data.success) {
         return response.data.data;
       } else {
-        throw new Error(response.data.message || 'Failed to fetch locations');
+        throw new Error(response.data.message || "Failed to fetch locations");
       }
     } catch (error) {
-      console.error('Error fetching locations:', error);
+      console.error("Error fetching locations:", error);
       throw error;
     }
   }
@@ -126,15 +126,15 @@ class DaycareService {
   // Get daycare statistics
   async getStats() {
     try {
-      const response = await apiClient.get('/api/daycares/stats/overview');
-      
+      const response = await apiClient.get("/api/daycares/stats/overview");
+
       if (response.data.success) {
         return response.data.data;
       } else {
-        throw new Error(response.data.message || 'Failed to fetch stats');
+        throw new Error(response.data.message || "Failed to fetch stats");
       }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error("Error fetching stats:", error);
       throw error;
     }
   }
@@ -156,16 +156,17 @@ class DaycareService {
         availability: "Available",
         ageRange: "6 months - 5 years",
         features: ["Nature-Inspired Learning", "Outdoor Play", "Healthy Meals"],
-        description: "A nature-inspired daycare focusing on outdoor learning and exploration.",
+        description:
+          "A nature-inspired daycare focusing on outdoor learning and exploration.",
         images: ["/images/daycare1.jpg"],
         contact: {
           phone: "(416) 555-0123",
           email: "hello@littleexplorers.ca",
-          address: "123 Nature Way, Toronto, ON"
+          address: "123 Nature Way, Toronto, ON",
         },
         coordinates: { lat: 43.6532, lng: -79.3832 },
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       },
       {
         id: "dc_0002",
@@ -181,17 +182,18 @@ class DaycareService {
         availability: "Waitlist",
         ageRange: "12 months - 6 years",
         features: ["STEM Learning", "Arts & Crafts", "Music & Movement"],
-        description: "Modern childcare center with focus on early childhood development.",
+        description:
+          "Modern childcare center with focus on early childhood development.",
         images: ["/images/daycare2.jpg"],
         contact: {
           phone: "(905) 555-0456",
           email: "info@brightbeginnings.ca",
-          address: "456 Learning Lane, Whitby, ON"
+          address: "456 Learning Lane, Whitby, ON",
         },
         coordinates: { lat: 43.8975, lng: -78.9428 },
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
+        updatedAt: new Date().toISOString(),
+      },
     ];
   }
 }

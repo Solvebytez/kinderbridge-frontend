@@ -60,7 +60,7 @@ interface Daycare {
   price?: string | number;
   priceString?: string;
   rating?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export default function ContactLogModal({
@@ -277,10 +277,11 @@ export default function ContactLogModal({
           setError(null);
           onClose();
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
+          const errorResponse = err as { response?: { data?: { error?: string; message?: string } } };
           setError(
-            err?.response?.data?.error ||
-              err?.response?.data?.message ||
+            errorResponse?.response?.data?.error ||
+              errorResponse?.response?.data?.message ||
               "Failed to log contact. Please try again."
           );
         },
