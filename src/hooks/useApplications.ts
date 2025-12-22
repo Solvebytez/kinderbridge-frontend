@@ -22,7 +22,7 @@ export function useApplications() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["applications", user?.userId],
+    queryKey: ["applications", user?._id],
     queryFn: async () => {
       return await getUserApplications();
     },
@@ -40,7 +40,7 @@ export function useApplications() {
     onSuccess: () => {
       // Invalidate and refetch applications
       queryClient.invalidateQueries({
-        queryKey: ["applications", user?.userId],
+        queryKey: ["applications", user?._id],
       });
     },
   });
@@ -57,7 +57,7 @@ export function useApplications() {
     onSuccess: () => {
       // Invalidate and refetch applications
       queryClient.invalidateQueries({
-        queryKey: ["applications", user?.userId],
+        queryKey: ["applications", user?._id],
       });
     },
   });
@@ -68,7 +68,7 @@ export function useApplications() {
     onSuccess: () => {
       // Invalidate and refetch applications
       queryClient.invalidateQueries({
-        queryKey: ["applications", user?.userId],
+        queryKey: ["applications", user?._id],
       });
     },
   });

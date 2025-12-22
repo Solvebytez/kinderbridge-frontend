@@ -22,7 +22,7 @@ export function useContactLogs() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["contactLogs", user?.userId],
+    queryKey: ["contactLogs", user?._id],
     queryFn: async () => {
       return await getUserContactLogs();
     },
@@ -40,7 +40,7 @@ export function useContactLogs() {
     onSuccess: () => {
       // Invalidate and refetch contact logs
       queryClient.invalidateQueries({
-        queryKey: ["contactLogs", user?.userId],
+        queryKey: ["contactLogs", user?._id],
       });
     },
   });
@@ -57,7 +57,7 @@ export function useContactLogs() {
     onSuccess: () => {
       // Invalidate and refetch contact logs
       queryClient.invalidateQueries({
-        queryKey: ["contactLogs", user?.userId],
+        queryKey: ["contactLogs", user?._id],
       });
     },
   });
@@ -68,7 +68,7 @@ export function useContactLogs() {
     onSuccess: () => {
       // Invalidate and refetch contact logs
       queryClient.invalidateQueries({
-        queryKey: ["contactLogs", user?.userId],
+        queryKey: ["contactLogs", user?._id],
       });
     },
   });

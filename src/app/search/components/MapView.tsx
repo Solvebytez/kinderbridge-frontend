@@ -10,56 +10,7 @@ interface MapViewProps {
   isLoading?: boolean;
 }
 
-// Google Maps types
-type GoogleMap = {
-  setCenter: (center: { lat: number; lng: number } | unknown) => void;
-  setZoom: (zoom: number) => void;
-  fitBounds: (bounds: unknown) => void;
-};
-
-type GoogleMarker = {
-  setMap: (map: GoogleMap | null) => void;
-  addListener: (event: string, callback: () => void) => void;
-  getPosition: () => { lat: () => number; lng: () => number } | null;
-};
-
-type GoogleGeocoder = {
-  geocode: (
-    request: { address: string },
-    callback: (results: unknown, status: string) => void
-  ) => void;
-};
-
-type GoogleInfoWindow = {
-  open: (map: GoogleMap, marker: GoogleMarker) => void;
-};
-
-declare global {
-  interface Window {
-    google: {
-      maps: {
-        Map: new (element: HTMLElement, options: unknown) => any;
-        Marker: new (options: unknown) => any;
-        Geocoder: new () => any;
-        LatLng: new (lat: number, lng: number) => any;
-        LatLngBounds: new () => { extend: (location: { lat: number; lng: number }) => void };
-        SymbolPath: {
-          CIRCLE: any;
-        };
-        InfoWindow: new (options: unknown) => any;
-        places?: {
-          Autocomplete: new (
-            input: HTMLInputElement,
-            options?: unknown
-          ) => any;
-        };
-        event: {
-          clearInstanceListeners: (instance: unknown) => void;
-        };
-      };
-    };
-  }
-}
+import type { GoogleMap, GoogleMarker, GoogleGeocoder, GoogleInfoWindow } from "@/types/google-maps";
 
 export default function MapView({
   daycares,
@@ -318,8 +269,8 @@ export default function MapView({
           setTimeout(() => {
             const address = `${daycare.address}, ${daycare.city}, ON, Canada`;
             geocoder.geocode({ address }, (results, status) => {
-              if (status === "OK" && results && results[0]) {
-                const location = results[0].geometry.location;
+              if (status === "OK" && results && Array.isArray(results) && results[0]) {
+                const location = (results[0] as { geometry: { location: { lat: () => number; lng: () => number } } }).geometry.location;
                 const lat = location.lat();
                 const lng = location.lng();
 

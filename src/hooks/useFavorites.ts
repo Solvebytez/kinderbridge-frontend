@@ -20,7 +20,7 @@ export function useFavorites() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["favorites", user?.userId],
+    queryKey: ["favorites", user?._id],
     queryFn: async () => {
       return await getFavorites();
     },
@@ -36,7 +36,7 @@ export function useFavorites() {
     mutationFn: (daycareId: string) => addFavorite(daycareId),
     onSuccess: () => {
       // Invalidate and refetch favorites
-      queryClient.invalidateQueries({ queryKey: ["favorites", user?.userId] });
+      queryClient.invalidateQueries({ queryKey: ["favorites", user?._id] });
     },
   });
 
@@ -45,7 +45,7 @@ export function useFavorites() {
     mutationFn: (daycareId: string) => removeFavorite(daycareId),
     onSuccess: () => {
       // Invalidate and refetch favorites
-      queryClient.invalidateQueries({ queryKey: ["favorites", user?.userId] });
+      queryClient.invalidateQueries({ queryKey: ["favorites", user?._id] });
     },
   });
 
