@@ -37,7 +37,7 @@ export default function Navigation() {
 
   const navigation = [
     { name: "Home", href: "/", icon: HomeIcon },
-    { name: "Find KinderBridge", href: "/search", icon: MagnifyingGlassIcon },
+    { name: "Find Daycares", href: "/search", icon: MagnifyingGlassIcon },
     { name: "About", href: "/about", icon: InformationCircleIcon },
     { name: "Contact", href: "/contact", icon: EnvelopeIcon },
   ];

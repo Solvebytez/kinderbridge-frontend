@@ -116,11 +116,7 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
               className="text-5xl md:text-6xl font-bold text-gray-900 mb-6"
             >
-              Find the Perfect
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {" "}
-                KinderBridge
-              </span>
+              Find the Perfect Daycare
               <br />
               for Your Child
             </motion.h1>
@@ -131,9 +127,8 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto"
             >
-              Connect with verified KinderBridge locations, read authentic
-              reviews, and make informed decisions for your child&apos;s early
-              education journey.
+              Browse with daycares, read authentic reviews, and make informed
+              decisions for your child&apos;s early education journey.
             </motion.p>
 
             {/* Search Form */}
