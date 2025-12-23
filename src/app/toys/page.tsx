@@ -20,6 +20,7 @@ import {
   User,
   LogOut,
   LayoutDashboard,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -1160,12 +1161,12 @@ export default function ToysPage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">KinderBridge</h3>
               <p className="text-gray-400">
-                Connecting parents with trusted KinderBridge locations,
-                educational classes, and developmental toys.
+                Connecting parents with trusted KinderBridge locations for a
+                brighter future.
               </p>
             </div>
             <div>
@@ -1176,72 +1177,75 @@ export default function ToysPage() {
                     href="/search"
                     className="hover:text-white transition-colors"
                   >
-                    Find KinderBridge
+                    Find Daycare
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/classes"
+                    href="/parent/dashboard?tab=favorites"
                     className="hover:text-white transition-colors"
                   >
-                    Find Classes
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/toys"
-                    className="hover:text-white transition-colors"
-                  >
-                    Developmental Toys
+                    My Favorites
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">For Providers</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link
-                    href="/provider/register"
-                    className="hover:text-white transition-colors"
-                  >
-                    List Your Center
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/provider/register"
-                    className="hover:text-white transition-colors"
-                  >
-                    Become an Instructor
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/provider/register"
-                    className="hover:text-white transition-colors"
-                  >
-                    Sell Developmental Toys
-                  </Link>
-                </li>
-              </ul>
+              <h4 className="font-semibold mb-4">Contact Information</h4>
+              <div className="space-y-2 text-gray-400">
+                <p className="font-medium text-gray-300 mb-2">Email Us</p>
+                <div className="flex items-center mb-2">
+                  <Mail className="h-4 w-4 mr-2" />
+                  <span>Info@kinderbridge.com</span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  We typically respond within 24 hours
+                </p>
+              </div>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li className="flex items-center">
-                  <span className="mr-2">📧</span>
-                  hello@kinderbridge.com
-                </li>
-                <li className="flex items-center">
-                  <span className="mr-2">📞</span>
-                  (555) 123-4567
+              <h4 className="font-semibold mb-4">Business Hours</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li>Monday - Friday: 9:00 AM - 6:00 PM EST</li>
+                <li>Saturday: 10:00 AM - 2:00 PM EST</li>
+                <li>Sunday: Closed</li>
+                <li className="text-sm text-gray-500 mt-3">
+                  Emergency support available 24/7
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 DayCare Concierge. All rights reserved.</p>
+            <p className="mb-2">
+              Connecting parents with trusted Daycares for a brighter future.
+            </p>
+            <p>&copy; {new Date().getFullYear()} KinderBridge. All rights reserved.</p>
+            <div className="mt-2 flex justify-center items-center space-x-2">
+              <span className="text-xs text-gray-500">
+                Developed by ASH Web Solutions
+              </span>
+              <a
+                href="https://ashwebsolutions.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-800"
+                title="Visit ASH WEB Solutions"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </footer>

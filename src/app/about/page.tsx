@@ -1,43 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Shield, Users, Star, Heart, Globe, Phone, Mail } from "lucide-react";
+import { Users, Star, Heart, Phone, Mail } from "lucide-react";
 import Link from "next/link";
 import ImagePlaceholder from "../../components/ImagePlaceholder";
 import Navigation from "../../components/Navigation";
 
 export default function AboutPage() {
-  const values = [
-    {
-      icon: Shield,
-      title: "Trust & Safety",
-      description:
-        "Every KinderBridge location on our platform is thoroughly vetted and verified to ensure the highest standards of safety and quality.",
-      color: "bg-blue-500",
-    },
-    {
-      icon: Users,
-      title: "Community First",
-      description:
-        "We believe in building strong connections between parents, providers, and communities to support children's growth.",
-      color: "bg-green-500",
-    },
-    {
-      icon: Star,
-      title: "Excellence",
-      description:
-        "We partner only with KinderBridge locations that demonstrate exceptional care, education, and commitment to children.",
-      color: "bg-yellow-500",
-    },
-    {
-      icon: Heart,
-      title: "Child-Centered",
-      description:
-        "Every decision we make is guided by what's best for children and their families.",
-      color: "bg-red-500",
-    },
-  ];
-
   const team = [
     {
       name: "Srinisha Chennamaneni",
@@ -57,13 +26,6 @@ export default function AboutPage() {
       bio: "Product leader passionate about creating intuitive experiences that connect families with quality care.",
       image: "/asvaik.jpeg",
     },
-  ];
-
-  const stats = [
-    { number: "1500+", label: "KinderBridge Locations", icon: Users },
-    { number: "25K+", label: "Happy Families", icon: Heart },
-    { number: "10+", label: "Cities Served", icon: Globe },
-    { number: "99%", label: "Accuracy", icon: Star },
   ];
 
   return (
@@ -180,94 +142,6 @@ export default function AboutPage() {
                 </p>
               </div>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Values Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Our Values
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              These core principles guide everything we do and every decision we
-              make.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {values.map((value, index) => (
-              <motion.div
-                key={value.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="bg-white rounded-xl p-6 shadow-lg text-center"
-              >
-                <div
-                  className={`w-16 h-16 ${value.color} rounded-full flex items-center justify-center mx-auto mb-4`}
-                >
-                  <value.icon className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {value.title}
-                </h3>
-                <p className="text-gray-600">{value.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Our Impact
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Numbers that tell the story of our commitment to families and
-              childcare providers.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <stat.icon className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">
-                  {stat.number}
-                </div>
-                <div className="text-gray-600">{stat.label}</div>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>
@@ -397,11 +271,11 @@ export default function AboutPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-white mb-4">
-              Ready to Find Your Perfect KinderBridge?
+              Ready to Find Your Perfect daycare?
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Join thousands of families who have found their ideal childcare
-              solution through our platform.
+              Join thousands of parents who have found their ideal daycare
+              location through our platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -414,7 +288,7 @@ export default function AboutPage() {
                 href="/search"
                 className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-lg font-medium transition-colors"
               >
-                Browse KinderBridge
+                Browse daycare
               </Link>
             </div>
           </motion.div>
@@ -424,7 +298,7 @@ export default function AboutPage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">KinderBridge</h3>
               <p className="text-gray-400">
@@ -440,72 +314,75 @@ export default function AboutPage() {
                     href="/search"
                     className="hover:text-white transition-colors"
                   >
-                    Find KinderBridge
+                    Find Daycare
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/favorites"
+                    href="/parent/dashboard?tab=favorites"
                     className="hover:text-white transition-colors"
                   >
                     My Favorites
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/purchase-report"
-                    className="hover:text-white transition-colors"
-                  >
-                    Get Report
-                  </Link>
-                </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">For Providers</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link
-                    href="/register"
-                    className="hover:text-white transition-colors"
-                  >
-                    List Your Center
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/provider/dashboard"
-                    className="hover:text-white transition-colors"
-                  >
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-white transition-colors"
-                  >
-                    Support
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li className="flex items-center">
+              <h4 className="font-semibold mb-4">Contact Information</h4>
+              <div className="space-y-2 text-gray-400">
+                <p className="font-medium text-gray-300 mb-2">Email Us</p>
+                <div className="flex items-center mb-2">
                   <Mail className="h-4 w-4 mr-2" />
-                  hello@kinderbridge.com
-                </li>
-                <li className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2" />
-                  (555) 123-4567
+                  <span>Info@kinderbridge.com</span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  We typically respond within 24 hours
+                </p>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Business Hours</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li>Monday - Friday: 9:00 AM - 6:00 PM EST</li>
+                <li>Saturday: 10:00 AM - 2:00 PM EST</li>
+                <li>Sunday: Closed</li>
+                <li className="text-sm text-gray-500 mt-3">
+                  Emergency support available 24/7
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 KinderBridge. All rights reserved.</p>
+            <p className="mb-2">
+              Connecting parents with trusted Daycares for a brighter future.
+            </p>
+            <p>&copy; {new Date().getFullYear()} KinderBridge. All rights reserved.</p>
+            <div className="mt-2 flex justify-center items-center space-x-2">
+              <span className="text-xs text-gray-500">
+                Developed by ASH Web Solutions
+              </span>
+              <a
+                href="https://ashwebsolutions.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-800"
+                title="Visit ASH WEB Solutions"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </footer>
