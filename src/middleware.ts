@@ -59,8 +59,8 @@ const authRoutes = ["/login", "/register"];
  * Get API base URL
  */
 function getApiBaseUrl(): string {
-  // Production URL (hardcoded for Render deployment)
-  const PRODUCTION_API_URL = "https://day-care-app-1.onrender.com";
+  // Production URL - use subdomain if available
+  const PRODUCTION_API_URL = "https://api.kinderbridge.ca";
   
   // In middleware, we need to use environment variable or default
   if (typeof process !== "undefined" && process.env) {

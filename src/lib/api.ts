@@ -6,16 +6,18 @@ import axios, {
 
 // API configuration for both development and production
 export const getApiBaseUrl = () => {
-  // Production URL (hardcoded for Render deployment)
-  const PRODUCTION_API_URL = "https://day-care-app-1.onrender.com";
+  // Production URL - use subdomain if available, otherwise fallback to Render
+  const PRODUCTION_API_URL = "https://api.kinderbridge.ca";
+  const FALLBACK_API_URL = "https://day-care-app-1.onrender.com";
 
   if (typeof window !== "undefined") {
-    // Client-side: check if we're on production (Render)
+    // Client-side: check if we're on production
     const isProduction =
       window.location.hostname !== "localhost" &&
       window.location.hostname !== "127.0.0.1";
 
     if (isProduction) {
+      // Try subdomain first, fallback to Render if not available
       return PRODUCTION_API_URL;
     }
 
