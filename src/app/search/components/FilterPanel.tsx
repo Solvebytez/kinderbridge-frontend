@@ -860,16 +860,13 @@ export default function FilterPanel({
               )}
 
               {/* View All Button */}
-              <button
-                onClick={() => {
-                  // Use window.location for reliable navigation in production
-                  window.location.href = "/parent/dashboard?tab=applications";
-                }}
+              <Link
+                href="/parent/dashboard?tab=applications"
                 className="w-full mt-3 flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
               >
                 <span>View All</span>
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
             </div>
           )}
         </div>
