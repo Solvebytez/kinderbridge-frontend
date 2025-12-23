@@ -127,7 +127,7 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto"
             >
-              Browse with daycares, read authentic reviews, and make informed
+              Browse daycares, read authentic reviews, and make informed
               decisions for your child&apos;s early education journey.
             </motion.p>
 
