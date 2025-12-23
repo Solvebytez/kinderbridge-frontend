@@ -8,29 +8,18 @@ import {
   Users,
   Shield,
   Clock,
-  Phone,
   Mail,
   ArrowRight,
-  Play,
   CheckCircle,
   User,
 } from "lucide-react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import Navigation from "../components/Navigation";
 
-// Lazy load VideoModal for better performance
-const VideoModal = dynamic(() => import("../components/VideoModal"), {
-  ssr: false,
-  loading: () => (
-    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse" />
-  ),
-});
 
 export default function HomePage() {
   const [location, setLocation] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const [showVideoModal, setShowVideoModal] = useState(false);
   const [errors, setErrors] = useState<{
     location?: string;
   }>({});
@@ -210,7 +199,7 @@ export default function HomePage() {
                       type="submit"
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center h-[48px]"
                     >
-                      Search KinderBridge
+                      Search daycare
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </button>
                   </div>
@@ -231,13 +220,6 @@ export default function HomePage() {
               >
                 Start Your Search
               </Link>
-              <button
-                onClick={() => setShowVideoModal(true)}
-                className="flex items-center justify-center px-8 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Play className="mr-2 h-4 w-4" />
-                Watch Demo
-              </button>
             </motion.div>
 
             {/* Quick Contact */}
@@ -247,18 +229,14 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 1.0 }}
               className="mt-8 text-center"
             >
-              <p className="text-gray-600 mb-3">
-                Need immediate help? Contact us directly:
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <div className="flex items-center space-x-2 text-gray-700">
-                  <Phone className="h-4 w-4" />
-                  <span>(555) 123-4567</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-700">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center space-x-2 text-gray-700 mb-2">
                   <Mail className="h-4 w-4" />
-                  <span>hello@kinderbridge.com</span>
+                  <span>Info@kinderbridge.com</span>
                 </div>
+                <p className="text-gray-600 text-sm">
+                  We typically respond within 24 hours
+                </p>
               </div>
             </motion.div>
           </div>
@@ -275,10 +253,10 @@ export default function HomePage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-white mb-4">
-              Ready to Find Your Perfect KinderBridge?
+              Ready to Find Your Perfect daycare?
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Join thousands of parents who have found their ideal KinderBridge
+              Join thousands of parents who have found their ideal daycare
               location through our platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -292,7 +270,7 @@ export default function HomePage() {
                 href="/search"
                 className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-lg font-medium transition-colors"
               >
-                Browse KinderBridge
+                Browse daycare
               </Link>
             </div>
           </motion.div>
@@ -302,7 +280,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">KinderBridge</h3>
               <p className="text-gray-400">
@@ -332,20 +310,34 @@ export default function HomePage() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li className="flex items-center">
+              <h4 className="font-semibold mb-4">Contact Information</h4>
+              <div className="space-y-2 text-gray-400">
+                <p className="font-medium text-gray-300 mb-2">Email Us</p>
+                <div className="flex items-center mb-2">
                   <Mail className="h-4 w-4 mr-2" />
-                  hello@daycareconcierge.com
-                </li>
-                <li className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2" />
-                  (555) 123-4567
+                  <span>Info@kinderbridge.com</span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  We typically respond within 24 hours
+                </p>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Business Hours</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li>Monday - Friday: 9:00 AM - 6:00 PM EST</li>
+                <li>Saturday: 10:00 AM - 2:00 PM EST</li>
+                <li>Sunday: Closed</li>
+                <li className="text-sm text-gray-500 mt-3">
+                  Emergency support available 24/7
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p className="mb-2">
+              Connecting parents with trusted Daycares for a brighter future.
+            </p>
             <p>&copy; {new Date().getFullYear()} KinderBridge. All rights reserved.</p>
             <div className="mt-2 flex justify-center items-center space-x-2">
               <span className="text-xs text-gray-500">
@@ -376,12 +368,6 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-
-      {/* Video Modal */}
-      <VideoModal
-        isOpen={showVideoModal}
-        onClose={() => setShowVideoModal(false)}
-      />
     </div>
   );
 }

@@ -166,10 +166,6 @@ export default function SearchResults({
                   ) : hasMoreResults ? (
                     <>
                       Showing {displayedDaycares.length} of {totalCount} results
-                      <br />
-                      <span className="text-blue-600 font-semibold">
-                        Purchase full report to see all {totalCount} results
-                      </span>
                     </>
                   ) : (
                     <>

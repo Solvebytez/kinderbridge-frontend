@@ -521,29 +521,6 @@ export default function DaycareDetailPage({
               </div>
             </motion.div>
 
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-white rounded-xl shadow-lg p-6"
-            >
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Quick Actions
-              </h3>
-              <div className="space-y-3">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                  Schedule a Visit
-                </button>
-                <button className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                  Apply Now
-                </button>
-                <button className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium transition-colors">
-                  Download Brochure
-                </button>
-              </div>
-            </motion.div>
-
             {/* Location */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}

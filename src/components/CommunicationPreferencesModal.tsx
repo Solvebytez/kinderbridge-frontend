@@ -24,13 +24,18 @@ export default function CommunicationPreferencesModal({
   isLoading = false,
 }: CommunicationPreferencesModalProps) {
   const [preferences, setPreferences] = useState<CommunicationPreferences>({
-    email: true, // Required, checked by default
-    sms: false,
-    promotional: false,
-    acknowledgement: false,
+    email: true, // Required, always checked
+    sms: true, // Checked by default
+    promotional: true, // Checked by default
+    acknowledgement: true, // Checked by default
   });
 
   const handleCheckboxChange = (field: keyof CommunicationPreferences) => {
+    // Email checkbox cannot be unchecked
+    if (field === "email") {
+      return;
+    }
+    
     setPreferences((prev) => ({
       ...prev,
       [field]: !prev[field],
@@ -101,8 +106,8 @@ export default function CommunicationPreferencesModal({
                   type="checkbox"
                   id="email"
                   checked={preferences.email}
-                  onChange={() => handleCheckboxChange("email")}
-                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  disabled={true}
+                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-not-allowed opacity-75"
                 />
               </div>
               <div className="flex-1">

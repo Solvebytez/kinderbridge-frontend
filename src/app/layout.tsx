@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import FloatingContact from "../components/FloatingContact";
 import PerformanceMonitor from "../components/PerformanceMonitor";
 // import MessageButton from "../components/MessageButton"; // Commented out - will add later
 import { AuthProvider } from "../contexts/AuthContext";
@@ -46,7 +45,6 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             {children}
-            <FloatingContact />
             <PerformanceMonitor />
             {/* <MessageButton /> */} {/* Commented out - will add later */}
           </AuthProvider>
