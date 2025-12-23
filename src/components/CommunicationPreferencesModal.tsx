@@ -27,7 +27,7 @@ export default function CommunicationPreferencesModal({
     email: true, // Required, always checked
     sms: true, // Checked by default
     promotional: true, // Checked by default
-    acknowledgement: true, // Checked by default
+    acknowledgement: false, // Unchecked by default - user must explicitly acknowledge
   });
 
   const handleCheckboxChange = (field: keyof CommunicationPreferences) => {
