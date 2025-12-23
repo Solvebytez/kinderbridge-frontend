@@ -302,8 +302,7 @@ export default function AboutPage() {
             <div>
               <h3 className="text-xl font-bold mb-4">KinderBridge</h3>
               <p className="text-gray-400">
-                Connecting parents with trusted KinderBridge locations for a
-                brighter future.
+                Connecting parents with trusted Daycares for a brighter future.
               </p>
             </div>
             <div>
@@ -353,9 +352,6 @@ export default function AboutPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p className="mb-2">
-              Connecting parents with trusted Daycares for a brighter future.
-            </p>
             <p>&copy; {new Date().getFullYear()} KinderBridge. All rights reserved.</p>
             <div className="mt-2 flex justify-center items-center space-x-2">
               <span className="text-xs text-gray-500">
