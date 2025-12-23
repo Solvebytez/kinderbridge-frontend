@@ -59,8 +59,19 @@ const authRoutes = ["/login", "/register"];
  * Get API base URL
  */
 function getApiBaseUrl(): string {
+  // Production URL (hardcoded for Render deployment)
+  const PRODUCTION_API_URL = "https://day-care-app-1.onrender.com";
+  
   // In middleware, we need to use environment variable or default
   if (typeof process !== "undefined" && process.env) {
+    // Check if we're in production
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    if (isProduction) {
+      return PRODUCTION_API_URL;
+    }
+    
+    // Development: use environment variable or fallback to localhost
     return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
   }
   return "http://localhost:5001";
@@ -160,11 +171,15 @@ async function refreshTokenIfNeeded(
     console.log("🔄 Proactively refreshing missing accessToken...");
 
     const apiUrl = getApiBaseUrl();
+    
+    // Forward all cookies from the incoming request to the backend
+    const cookieHeader = request.headers.get("cookie") || "";
+    
     const refreshResponse = await fetch(`${apiUrl}/api/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: `refreshToken=${refreshToken}`,
+        Cookie: cookieHeader, // Forward all cookies from the request
       },
       credentials: "include",
     });
@@ -329,11 +344,15 @@ export async function middleware(request: NextRequest) {
 
       // Refresh the token and get user info in one call
       const apiUrl = getApiBaseUrl();
+      
+      // Forward all cookies from the incoming request to the backend
+      const cookieHeader = request.headers.get("cookie") || "";
+      
       const refreshResponse = await fetch(`${apiUrl}/api/auth/refresh`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: `refreshToken=${refreshToken}`,
+          Cookie: cookieHeader, // Forward all cookies from the request
         },
         credentials: "include",
       });
@@ -476,11 +495,15 @@ export async function middleware(request: NextRequest) {
           lastRefreshTime.set(refreshToken, now);
 
           const apiUrl = getApiBaseUrl();
+          
+          // Forward all cookies from the incoming request to the backend
+          const cookieHeader = request.headers.get("cookie") || "";
+          
           const refreshResponse = await fetch(`${apiUrl}/api/auth/refresh`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Cookie: `refreshToken=${refreshToken}`,
+              Cookie: cookieHeader, // Forward all cookies from the request
             },
             credentials: "include",
           });
