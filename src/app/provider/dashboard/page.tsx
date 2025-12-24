@@ -102,7 +102,7 @@ export default function ProviderDashboard() {
   }, []);
 
   // Transform API favorites to Daycare format
-  const favorites = useMemo(() => {
+  const favorites = useMemo((): Daycare[] => {
     if (!apiFavorites || apiFavorites.length === 0) {
       return [];
     }
@@ -118,7 +118,7 @@ export default function ProviderDashboard() {
           name: daycare.name || "Unnamed KinderBridge",
           city: daycare.city || "",
           address: daycare.address || "",
-          phone: daycare.phone || "",
+          phone: (daycare.phone as string) || "",
           email: daycare.email || "",
           rating: (daycare.rating as number) || 0,
           price: daycare.price || daycare.monthlyFee || 0,
