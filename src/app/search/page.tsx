@@ -600,20 +600,26 @@ export default function SearchPage() {
   // Extract data from query response
   const daycaresData = useMemo(() => {
     const data = daycaresResponse?.data || [];
+    // Transform API response: map _id to id (MongoDB returns _id, but frontend expects id)
+    const transformedData = data.map((daycare: any) => ({
+      ...daycare,
+      id: daycare._id || daycare.id || "",
+    }));
     // Debug: Log all daycares to see priceString
-    if (data.length > 0) {
+    if (transformedData.length > 0) {
       console.log(
         "📊 ALL DAYCARES DATA:",
-        data.map((d: Daycare) => ({
+        transformedData.map((d: Daycare) => ({
           name: d.name,
           price: d.price,
           priceString: d.priceString,
           hasPriceString: !!d.priceString,
           priceStringValue: d.priceString,
+          id: d.id,
         }))
       );
     }
-    return data;
+    return transformedData;
   }, [daycaresResponse?.data]);
   const paginationMeta = daycaresResponse?.metadata?.pagination;
   const totalPages = paginationMeta?.totalPages || 1;
@@ -674,17 +680,6 @@ export default function SearchPage() {
     return sorted;
   }, [daycaresData, sortBy, sortOrder, getPriceValue]);
 
-  // Use sorted daycares as displayed daycares (backend already paginated)
-  const displayedDaycares = sortedDaycares;
-
-  // All daycares for map view (logged in users only)
-  const allDaycaresForMap = useMemo(() => {
-    if (!user || authLoading) {
-      return displayedDaycares; // For guests, use displayed daycares
-    }
-    return allDaycaresResponse?.data || displayedDaycares;
-  }, [user, authLoading, allDaycaresResponse?.data, displayedDaycares]);
-
   // Guest users see only 2 results
   // Logged-in users without purchase see 5 results
   // Users with purchase see all results with pagination
@@ -696,6 +691,31 @@ export default function SearchPage() {
     : hasPurchasedReport
     ? resultsPerPage
     : freeUserLimit;
+
+  // Use sorted daycares as displayed daycares (backend already paginated)
+  // Limit results for guests and free users client-side
+  const displayedDaycares = useMemo(() => {
+    if (isGuest) {
+      return sortedDaycares.slice(0, guestLimit);
+    } else if (!hasPurchasedReport) {
+      return sortedDaycares.slice(0, freeUserLimit);
+    }
+    return sortedDaycares;
+  }, [sortedDaycares, isGuest, guestLimit, hasPurchasedReport, freeUserLimit]);
+
+  // All daycares for map view (logged in users only)
+  const allDaycaresForMap = useMemo(() => {
+    if (!user || authLoading) {
+      return displayedDaycares; // For guests, use displayed daycares
+    }
+    const mapData = allDaycaresResponse?.data || [];
+    // Transform API response: map _id to id (MongoDB returns _id, but frontend expects id)
+    const transformedMapData = mapData.map((daycare: any) => ({
+      ...daycare,
+      id: daycare._id || daycare.id || "",
+    }));
+    return transformedMapData.length > 0 ? transformedMapData : displayedDaycares;
+  }, [user, authLoading, allDaycaresResponse?.data, displayedDaycares]);
 
   // Note: Backend pagination is handled via queryParams, but we still need to limit
   // results for guest/free users client-side if needed

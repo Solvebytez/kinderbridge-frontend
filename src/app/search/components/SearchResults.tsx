@@ -190,7 +190,7 @@ export default function SearchResults({
             >
               {totalCount > 0
                 ? isGuest && hasMoreResults
-                  ? `${totalCount} daycares locations matching your criteria (showing 2 for guests)`
+                  ? `${totalCount} daycares locations matching your criteria (showing ${displayedDaycares.length} for guests)`
                   : `${totalCount} daycares locations matching your criteria`
                 : "No daycares found. Try adjusting your filters."}
             </p>
@@ -529,7 +529,7 @@ export default function SearchResults({
                   </Link>
                 </div>
 
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-600">
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span>Unlimited search results</span>
@@ -537,10 +537,6 @@ export default function SearchResults({
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span>Save favorites & compare</span>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Direct messaging</span>
                   </div>
                 </div>
               </div>
