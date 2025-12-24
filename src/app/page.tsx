@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   MapPin,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Navigation from "../components/Navigation";
+import { apiClient } from "../lib/api";
 
 
 export default function HomePage() {
@@ -23,30 +25,26 @@ export default function HomePage() {
   const [errors, setErrors] = useState<{
     location?: string;
   }>({});
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // GTA and Durham/York region cities
-  const gtaCities = [
-    "Toronto",
-    "Whitby",
-    "Oshawa",
-    "Ajax",
-    "Mississauga",
-    "Brampton",
-    "Oakville",
-    "Markham",
-    "Richmond Hill",
-    "Vaughan",
-    "Pickering",
-    "Scarborough",
-    "North York",
-    "Etobicoke",
-    "Burlington",
-    "Milton",
-    "Caledon",
-    "Aurora",
-    "Newmarket",
-    "Stouffville",
-  ];
+  // Fetch regions from database
+  const { data: regionsResponse, isLoading: regionsLoading } = useQuery({
+    queryKey: ["daycares", "regions"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/daycares/regions/all");
+      return response.data;
+    },
+  });
+
+  const regions: string[] = useMemo(() => {
+    if (Array.isArray(regionsResponse?.data)) {
+      return regionsResponse.data;
+    }
+    if (Array.isArray(regionsResponse)) {
+      return regionsResponse;
+    }
+    return [];
+  }, [regionsResponse]);
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -64,8 +62,8 @@ export default function HomePage() {
         return;
       }
 
-      // Validate location: must be from the dropdown (valid city)
-      if (hasLocation && !gtaCities.includes(location.trim())) {
+      // Validate location: must be from the dropdown (valid region)
+      if (hasLocation && !regions.includes(location.trim())) {
         newErrors.location = "Please select a valid location from the dropdown";
         setErrors(newErrors);
         return;
@@ -80,14 +78,14 @@ export default function HomePage() {
 
       window.location.href = `/search?${params.toString()}`;
     },
-    [location]
+    [location, regions]
   );
 
-  const selectCity = useCallback(
-    (city: string) => {
-      setLocation(city);
+  const selectRegion = useCallback(
+    (region: string) => {
+      setLocation(region);
       setShowLocationDropdown(false);
-      // Clear location error when city is selected from dropdown
+      // Clear location error when region is selected from dropdown
       if (errors.location) {
         setErrors((prev) => ({ ...prev, location: undefined }));
       }
@@ -96,11 +94,24 @@ export default function HomePage() {
   );
 
   // Close dropdown when clicking outside
-  const handleClickOutside = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      setShowLocationDropdown(false);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowLocationDropdown(false);
+      }
+    };
+
+    if (showLocationDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
-  }, []);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showLocationDropdown]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -137,19 +148,18 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
               className="max-w-4xl mx-auto"
-              onClick={handleClickOutside}
             >
               <form
                 onSubmit={handleSearch}
                 className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200"
               >
-                <div className="flex gap-4 items-start">
-                  <div className="relative flex-1">
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                  <div ref={dropdownRef} className="relative flex-1 w-full sm:w-auto">
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 z-10" />
                       <input
                         type="text"
-                        placeholder="Enter your location"
+                        placeholder="Select a region"
                         value={location}
                         onChange={(e) => {
                           setLocation(e.target.value);
@@ -173,26 +183,36 @@ export default function HomePage() {
                         {errors.location}
                       </p>
                     )}
-                    {/* City Dropdown */}
+                    {/* Region Dropdown */}
                     {showLocationDropdown && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                        {gtaCities.map((city) => (
-                          <button
-                            key={city}
-                            type="button"
-                            onClick={() => selectCity(city)}
-                            className="w-full px-4 py-2 text-left text-gray-800 font-medium hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                          >
-                            {city}
-                          </button>
-                        ))}
+                        {regionsLoading ? (
+                          <div className="px-4 py-2 text-gray-500 text-center">
+                            Loading regions...
+                          </div>
+                        ) : regions.length > 0 ? (
+                          regions.map((region) => (
+                            <button
+                              key={region}
+                              type="button"
+                              onClick={() => selectRegion(region)}
+                              className="w-full px-4 py-2 text-left text-gray-800 font-medium hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                            >
+                              {region}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-2 text-gray-500 text-center">
+                            No regions available
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                  <div className="flex items-start">
+                  <div className="flex items-start w-full sm:w-auto">
                     <button
                       type="submit"
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center h-[48px]"
+                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center h-[48px]"
                     >
                       Search daycare
                       <ArrowRight className="ml-2 h-4 w-4" />

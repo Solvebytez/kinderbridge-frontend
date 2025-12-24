@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../lib/api";
 
 export interface User {
@@ -81,6 +82,7 @@ console.log("🔧 DEBUG: NEXT_PUBLIC_API_URL =", process.env.NEXT_PUBLIC_API_URL
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -243,8 +245,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      // Clear all React Query cache and cancel ongoing queries
+      queryClient.clear();
+      queryClient.cancelQueries();
+      
       // Clear local state
       setUser(null);
+      setIsLoading(false);
+      
+      // Redirect to home page
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
     }
   };
 

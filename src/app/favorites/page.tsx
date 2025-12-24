@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Heart, MapPin, Star, Clock, ArrowLeft, Trash2 } from "lucide-react";
-import { api } from "../../lib/api";
-import daycaresLocalData from "../../data/daycares.json";
 import { formatDaycarePrice } from "../../utils/priceFormatter";
+import { useFavorites } from "../../hooks/useFavorites";
 
 interface Daycare {
   id: string;
@@ -30,10 +29,12 @@ interface Daycare {
 export default function FavoritesPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const {
+    favorites: apiFavorites,
+    isLoading: favoritesLoading,
+    removeFavorite: removeFavoriteAPI,
+  } = useFavorites();
   const [favoriteDaycares, setFavoriteDaycares] = useState<Daycare[]>([]);
-  const [allDaycares, setAllDaycares] = useState<Daycare[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -41,67 +42,50 @@ export default function FavoritesPage() {
     }
   }, [user, isLoading, router]);
 
-  // Load all daycares data (from API or local fallback)
-  useEffect(() => {
-    const fetchDaycares = async () => {
-      try {
-        const data = await api.daycares.getAll();
-        if (data.success && data.data) {
-          setAllDaycares(data.data);
-        } else {
-          throw new Error("Invalid data format");
-        }
-      } catch (err) {
-        console.warn("API fetch failed, using local data:", err);
-        setAllDaycares(daycaresLocalData as Daycare[]);
-      } finally {
-        setDataLoading(false);
-      }
-    };
-
-    fetchDaycares();
-  }, []);
-
-  // Load favorite IDs from localStorage
-  useEffect(() => {
-    const savedFavorites = localStorage.getItem("daycare-favorites");
-    if (savedFavorites) {
-      try {
-        const parsed = JSON.parse(savedFavorites);
-        // Handle both array of IDs (new format) and array of objects (old format)
-        if (Array.isArray(parsed)) {
-          if (parsed.length > 0 && typeof parsed[0] === "string") {
-            setFavoriteIds(parsed);
-          } else if (parsed.length > 0 && typeof parsed[0] === "object") {
-            // Legacy format - extract IDs
-            setFavoriteIds(parsed.map((item: Daycare) => item.id));
-          }
-        }
-      } catch (e) {
-        console.error("Error parsing favorites:", e);
-      }
+  // Transform API favorites to Daycare format
+  const apiFavoriteDaycares = useMemo(() => {
+    if (!user || !apiFavorites || apiFavorites.length === 0) {
+      return [];
     }
-  }, []);
 
-  // Match favorite IDs with daycare data
+    return apiFavorites
+      .filter((favorite) => favorite.daycare) // Filter out favorites without daycare data
+      .map((favorite) => {
+        const daycare = favorite.daycare!;
+        const daycareId = daycare._id || daycare.id || favorite.daycareId;
+
+        return {
+          id: daycareId,
+          name: daycare.name || "Unnamed KinderBridge",
+          city: daycare.city || "",
+          address: daycare.address || "",
+          rating: (daycare.rating as number) || 0,
+          price: daycare.price || daycare.monthlyFee || 0,
+          priceString: daycare.priceString as string | undefined,
+          hours: daycare.hours as string || "",
+          description: (daycare.description as string) || "",
+          features: (daycare.features as string[]) || [],
+          distance: (daycare.distance as number) || 0,
+          ageRange: (daycare.ageRange as string) || "",
+          subsidy: (daycare.subsidy as string) || "",
+          phone: (daycare.phone as string) || "",
+          email: (daycare.email as string) || "",
+        };
+      });
+  }, [user, apiFavorites]);
+
+  // Set favorite daycares from API
   useEffect(() => {
-    if (allDaycares.length > 0 && favoriteIds.length > 0) {
-      const matched = favoriteIds
-        .map((id) => allDaycares.find((dc) => dc.id === id))
-        .filter((dc): dc is Daycare => dc !== undefined);
-      setFavoriteDaycares(matched);
-    } else {
-      setFavoriteDaycares([]);
+    if (user) {
+      setFavoriteDaycares(apiFavoriteDaycares);
     }
-  }, [allDaycares, favoriteIds]);
+  }, [user, apiFavoriteDaycares]);
 
   const removeFavorite = (daycareId: string) => {
-    const updatedIds = favoriteIds.filter((id) => id !== daycareId);
-    setFavoriteIds(updatedIds);
-    localStorage.setItem("daycare-favorites", JSON.stringify(updatedIds));
+    removeFavoriteAPI(daycareId);
   };
 
-  if (isLoading || dataLoading) {
+  if (isLoading || favoritesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
         <div className="text-center">

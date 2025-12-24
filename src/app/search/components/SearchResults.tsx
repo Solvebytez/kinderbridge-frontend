@@ -506,7 +506,7 @@ export default function SearchResults({
                   Unlock All {totalCount} Results
                 </h3>
                 <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  You&apos;re seeing only 2 of {totalCount} daycares. Sign up
+                  You&apos;re seeing only 4 of {totalCount} daycares. Sign up
                   for free to access all results, save favorites, compare
                   daycares, and get personalized recommendations.
                 </p>

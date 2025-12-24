@@ -26,6 +26,8 @@ import daycaresData from "../../../data/daycares.json";
 import LocationMap from "./components/LocationMap";
 import { apiClient } from "@/lib/api";
 import { formatDaycarePrice } from "../../../utils/priceFormatter";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface Daycare {
   id: string;
@@ -56,12 +58,22 @@ export default function DaycareDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { user } = useAuth();
+  const {
+    favorites: apiFavorites,
+    addFavorite: addFavoriteAPI,
+    removeFavorite: removeFavoriteAPI,
+  } = useFavorites();
   const [daycare, setDaycare] = useState<Daycare | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [id, setId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Get favorite IDs from API
+  const favoriteIds = apiFavorites.map(
+    (fav) => fav.daycareId || fav.daycare?._id || fav.daycare?.id || ""
+  );
+  const isFavorite = id ? favoriteIds.includes(id) : false;
 
   useEffect(() => {
     // Handle async params and fetch daycare data
@@ -123,13 +135,6 @@ export default function DaycareDetailPage({
           }
         }
 
-        // Load favorites from localStorage
-        const savedFavorites = localStorage.getItem("daycare-favorites");
-        if (savedFavorites) {
-          const favIds = JSON.parse(savedFavorites);
-          setFavorites(favIds);
-          setIsFavorite(favIds.includes(resolvedParams.id));
-        }
       } catch (err) {
         console.error("Error loading daycare:", err);
         setError("Failed to load KinderBridge");
@@ -141,13 +146,18 @@ export default function DaycareDetailPage({
   }, [params]);
 
   const toggleFavorite = () => {
-    const newFavorites = isFavorite
-      ? favorites.filter((favId) => favId !== id)
-      : [...favorites, id];
-
-    setFavorites(newFavorites);
-    setIsFavorite(!isFavorite);
-    localStorage.setItem("daycare-favorites", JSON.stringify(newFavorites));
+    if (user) {
+      // For logged-in users, use API
+      if (isFavorite) {
+        removeFavoriteAPI(id);
+      } else {
+        addFavoriteAPI(id);
+      }
+    } else {
+      // For guest users, redirect to login
+      const currentUrl = window.location.pathname;
+      window.location.href = `/login?redirect=${encodeURIComponent(currentUrl)}`;
+    }
   };
 
   // Email validation regex
@@ -365,28 +375,30 @@ export default function DaycareDetailPage({
               </div>
             </motion.div>
 
-            {/* Features Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-xl shadow-lg p-6"
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Features & Programs
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {daycare.features.map((feature, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
-                  >
-                    {getFeatureIcon(feature)}
-                    <span className="font-medium text-gray-900">{feature}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
+            {/* Features Section - Only show if features exist */}
+            {daycare.features && daycare.features.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-xl shadow-lg p-6"
+              >
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Features & Programs
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {daycare.features.map((feature, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
+                    >
+                      {getFeatureIcon(feature)}
+                      <span className="font-medium text-gray-900">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Cost Breakdown */}
             <motion.div

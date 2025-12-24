@@ -64,15 +64,18 @@ export default function SearchPage() {
   const [acceptsSubsidy, setAcceptsSubsidy] = useState(false);
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [localFavorites, setLocalFavorites] = useState<string[]>([]); // For guest users
   const [favoriteLoadingId, setFavoriteLoadingId] = useState<string | null>(
     null
   ); // Track which favorite is loading
   const [compareList, setCompareList] = useState<string[]>([]);
   const [showComparison, setShowComparison] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [resultsPerPage] = useState(4);
   const [hasPurchasedReport] = useState(false);
+  
+  // Results per page: 15 for logged-in users, 4 for guests
+  const resultsPerPage = useMemo(() => {
+    return user && !authLoading ? 15 : 4;
+  }, [user, authLoading]);
   const [recentlyViewed, setRecentlyViewed] = useState<Daycare[]>([]);
 
   // Debounced search query
@@ -96,7 +99,19 @@ export default function SearchPage() {
     availability: false,
   });
 
-  // Get favorite IDs from API (for logged-in users) or localStorage (for guests)
+  // Read location from URL query parameter and auto-select region
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const locationParam = params.get("location");
+      if (locationParam) {
+        // Set the region filter to the location from URL
+        setSelectedRegion(locationParam.trim());
+      }
+    }
+  }, []); // Run only once on mount
+
+  // Get favorite IDs from API (only for logged-in users)
   const favorites = useMemo(() => {
     if (user) {
       // For logged-in users, get favorite IDs from API
@@ -104,24 +119,10 @@ export default function SearchPage() {
         (fav) => fav.daycareId || fav.daycare?._id || fav.daycare?.id || ""
       );
     } else {
-      // For guest users, use localStorage
-      return localFavorites;
+      // For guest users, no favorites (they need to login)
+      return [];
     }
-  }, [user, apiFavorites, localFavorites]);
-
-  // Load favorites from localStorage for guest users
-  useEffect(() => {
-    if (!user && !authLoading) {
-      const savedFavorites = localStorage.getItem("daycare-favorites");
-      if (savedFavorites) {
-        try {
-          setLocalFavorites(JSON.parse(savedFavorites));
-        } catch (error) {
-          console.error("Failed to parse saved favorites:", error);
-        }
-      }
-    }
-  }, [user, authLoading]);
+  }, [user, apiFavorites]);
 
   // Re-read URL parameters when user logs in (in case they came from a redirect)
   useEffect(() => {
@@ -680,28 +681,21 @@ export default function SearchPage() {
     return sorted;
   }, [daycaresData, sortBy, sortOrder, getPriceValue]);
 
-  // Guest users see only 2 results
-  // Logged-in users without purchase see 5 results
-  // Users with purchase see all results with pagination
+  // Guest users see only 4 results
+  // Logged-in users see 15 results per page (backend pagination)
   const isGuest = !user && !authLoading;
-  const guestLimit = 2;
-  const freeUserLimit = 5; // Limited results for logged-in users without purchase
-  const maxResults = isGuest
-    ? guestLimit
-    : hasPurchasedReport
-    ? resultsPerPage
-    : freeUserLimit;
+  const guestLimit = 4;
+  const maxResults = isGuest ? guestLimit : resultsPerPage;
 
   // Use sorted daycares as displayed daycares (backend already paginated)
-  // Limit results for guests and free users client-side
+  // Limit results for guests client-side only
   const displayedDaycares = useMemo(() => {
     if (isGuest) {
       return sortedDaycares.slice(0, guestLimit);
-    } else if (!hasPurchasedReport) {
-      return sortedDaycares.slice(0, freeUserLimit);
     }
+    // For logged-in users, backend pagination handles the limit (15 per page)
     return sortedDaycares;
-  }, [sortedDaycares, isGuest, guestLimit, hasPurchasedReport, freeUserLimit]);
+  }, [sortedDaycares, isGuest, guestLimit]);
 
   // All daycares for map view (logged in users only)
   const allDaycaresForMap = useMemo(() => {
@@ -759,16 +753,12 @@ export default function SearchPage() {
           addFavoriteAPI(id);
         }
       } else {
-        // For guest users, use localStorage (instant, no loading needed)
-        const newFavorites = localFavorites.includes(id)
-          ? localFavorites.filter((fav) => fav !== id)
-          : [...localFavorites, id];
-
-        setLocalFavorites(newFavorites);
-        localStorage.setItem("daycare-favorites", JSON.stringify(newFavorites));
+        // For guest users, redirect to login
+        const currentUrl = window.location.pathname + window.location.search;
+        window.location.href = `/login?redirect=${encodeURIComponent(currentUrl)}`;
       }
     },
-    [user, favorites, localFavorites, addFavoriteAPI, removeFavoriteAPI]
+    [user, favorites, addFavoriteAPI, removeFavoriteAPI]
   );
 
   // Clear loading state when mutations complete
@@ -948,7 +938,11 @@ export default function SearchPage() {
           <SearchSummary
             isLoading={isLoading}
             totalCount={totalCount}
-            favoritesCount={user ? apiFavorites.length : 0}
+            favoritesCount={
+              user
+                ? apiFavorites.filter((fav) => fav.daycare).length
+                : 0
+            }
             compareListCount={compareList.length}
             compareListLength={compareList.length}
             onShowComparison={() => setShowComparison(true)}

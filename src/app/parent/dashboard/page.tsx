@@ -184,9 +184,11 @@ export default function ParentDashboard() {
       return [];
     }
 
-    return favorites.map((favorite) => {
-      const daycare = favorite.daycare;
-      const daycareId = daycare._id || daycare.id || favorite.daycareId;
+    return favorites
+      .filter((favorite) => favorite.daycare) // Filter out favorites without daycare data
+      .map((favorite) => {
+        const daycare = favorite.daycare!; // Non-null assertion since we filtered above
+        const daycareId = daycare._id || daycare.id || favorite.daycareId;
 
       // Format price
       const price = formatDaycarePrice(
@@ -384,10 +386,38 @@ export default function ParentDashboard() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex space-x-8">
-          {/* Sidebar */}
-          <div className="w-64 flex-shrink-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Mobile Tabs - Horizontal */}
+        <div className="lg:hidden mb-6">
+          <nav className="flex space-x-2 border-b border-gray-200">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-t-lg transition-colors border-b-2 ${
+                    isActive
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "text-gray-700 hover:bg-gray-100 border-transparent"
+                  }`}
+                >
+                  <Icon
+                    className={`h-5 w-5 ${
+                      isActive ? "text-white" : "text-blue-600"
+                    }`}
+                  />
+                  <span className="font-medium text-sm sm:text-base">{tab.name}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:space-x-8">
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
             <nav className="space-y-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -415,7 +445,7 @@ export default function ParentDashboard() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             {/* Tab Content */}
             {activeTab === "favorites" && (
               <motion.div
@@ -423,7 +453,7 @@ export default function ParentDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <h1 className="text-2xl font-bold text-gray-900 mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                   Favorites
                 </h1>
 
@@ -475,7 +505,7 @@ export default function ParentDashboard() {
                 {!favoritesLoading &&
                   !favoritesError &&
                   savedSearches.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                       {savedSearches.map((search, index) => {
                         // Get the corresponding favorite object to access daycareId
                         const favorite = favorites.find(
@@ -489,7 +519,7 @@ export default function ParentDashboard() {
                           className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                         >
                           <div className="relative">
-                            <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                            <div className="w-full h-40 sm:h-48 bg-gray-200 flex items-center justify-center">
                               {search.image &&
                               search.image !== "/api/placeholder/400/300" ? (
                                 <img
@@ -546,21 +576,21 @@ export default function ParentDashboard() {
                             </div>
                           </div>
 
-                          <div className="p-4">
-                            <h3 className="font-medium text-gray-900 mb-1">
+                          <div className="p-3 sm:p-4">
+                            <h3 className="font-medium text-gray-900 mb-1 text-sm sm:text-base line-clamp-2">
                               {search.name}
                             </h3>
-                            <p className="text-sm text-gray-600 mb-2">
+                            <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">
                               {search.location}
                             </p>
                             <div className="flex items-center justify-between mb-3">
-                              <span className="text-lg font-semibold text-gray-900">
+                              <span className="text-base sm:text-lg font-semibold text-gray-900">
                                 {search.price}
                               </span>
                             </div>
                             <Link
                               href={`/daycare/${search.id}`}
-                              className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors text-center"
+                              className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 sm:px-4 rounded-lg font-medium transition-colors text-center text-sm sm:text-base"
                             >
                               View Details
                             </Link>
@@ -579,7 +609,7 @@ export default function ParentDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <h1 className="text-2xl font-bold text-gray-900 mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                   Contact Logs
                 </h1>
                 {contactLogsLoading ? (
@@ -605,14 +635,14 @@ export default function ParentDashboard() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {applications.map((application) => (
                       <div
                         key={application.id}
                         className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                       >
                         <div className="relative">
-                          <div className="w-full h-48 bg-gray-200 flex items-center justify-center overflow-hidden">
+                          <div className="w-full h-40 sm:h-48 bg-gray-200 flex items-center justify-center overflow-hidden">
                             {application.image &&
                             application.image !== "/api/placeholder/400/300" ? (
                               <img
@@ -722,19 +752,19 @@ export default function ParentDashboard() {
                           </div>
                         </div>
 
-                        <div className="p-4">
-                          <h3 className="font-medium text-gray-900 mb-1">
+                        <div className="p-3 sm:p-4">
+                          <h3 className="font-medium text-gray-900 mb-1 text-sm sm:text-base line-clamp-2">
                             {application.daycareName}
                           </h3>
-                          <p className="text-sm text-gray-600 mb-2">
+                          <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">
                             {application.location}
                           </p>
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-lg font-semibold text-gray-900">
+                            <span className="text-base sm:text-lg font-semibold text-gray-900">
                               {application.price}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500 mb-3">
                             <span>
                               Contacted:{" "}
                               {new Date(
@@ -765,7 +795,7 @@ export default function ParentDashboard() {
                                 console.log("Available contact logs:", contactLogs);
                               }
                             }}
-                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors text-center"
+                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 sm:px-4 rounded-lg font-medium transition-colors text-center text-sm sm:text-base"
                           >
                             View Details
                           </button>

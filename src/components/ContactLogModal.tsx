@@ -248,17 +248,13 @@ export default function ContactLogModal({
       return;
     }
 
-    if (!formData.notes || formData.notes.length < 10) {
-      setError("Notes must be at least 10 characters long");
-      return;
-    }
 
     createContactLogMutation.mutate(
       {
         daycareId: formData.daycareId,
         contactMethod: formData.contactMethod,
         purpose: formData.purpose,
-        notes: formData.notes,
+        notes: formData.notes || undefined,
         outcome: formData.outcome || undefined,
         followUpDate: formData.followUpDate || undefined,
       },
@@ -291,10 +287,9 @@ export default function ContactLogModal({
 
   if (!isOpen) return null;
 
-  const userName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`.toUpperCase()
-      : user?.email || "User";
+  const userName = user?.firstName && user?.lastName
+    ? `${user.firstName} ${user.lastName}`
+    : user?.firstName || user?.lastName || user?.email || "User";
 
   return (
     <AnimatePresence>
@@ -516,7 +511,7 @@ export default function ContactLogModal({
               {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes <span className="text-red-500">*</span>
+                  Notes (optional)
                 </label>
                 <textarea
                   name="notes"
@@ -525,12 +520,10 @@ export default function ContactLogModal({
                   rows={4}
                   placeholder="What happened during this contact?"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                  minLength={10}
                   maxLength={1000}
                 />
                 <div className="mt-1 text-xs text-gray-500">
-                  {formData.notes.length}/1000 characters (min 10)
+                  {formData.notes.length}/1000 characters
                 </div>
               </div>
 

@@ -27,6 +27,7 @@ import Navigation from '@/components/Navigation';
 import { api } from '@/lib/api';
 import daycaresLocalData from '@/data/daycares.json';
 import { formatDaycarePrice } from '@/utils/priceFormatter';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface TimeSlot {
   id: string;
@@ -59,13 +60,16 @@ interface Daycare {
 export default function ProviderDashboard() {
   const { user, logout, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const {
+    favorites: apiFavorites,
+    isLoading: favoritesLoading,
+    removeFavorite: removeFavoriteAPI,
+  } = useFavorites();
   
   const [activeTab, setActiveTab] = useState('overview');
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [availability, setAvailability] = useState<TimeSlot[]>([]);
   const [showAddSlot, setShowAddSlot] = useState(false);
-  const [favorites, setFavorites] = useState<Daycare[]>([]);
-  const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [newSlot, setNewSlot] = useState({
     day: 'Monday',
     startTime: '08:00',
@@ -97,68 +101,39 @@ export default function ProviderDashboard() {
     ]);
   }, []);
 
-  // Load favorites
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      setFavoritesLoading(true);
-      try {
-        let allDaycares: Daycare[] = [];
-        try {
-          const response = await api.daycares.getAll();
-          if (response.success && response.data) {
-            allDaycares = response.data;
-          } else {
-            throw new Error('API failed');
-          }
-        } catch {
-          allDaycares = daycaresLocalData as Daycare[];
-        }
-
-        const savedFavorites = localStorage.getItem('daycare-favorites');
-        let favoriteIds: string[] = [];
-        if (savedFavorites) {
-          try {
-            const parsed = JSON.parse(savedFavorites);
-            favoriteIds = parsed.map((item: string | { id: string }) => 
-              typeof item === 'object' && item !== null ? item.id : item
-            );
-          } catch (e) {
-            console.error('Error parsing favorites:', e);
-          }
-        }
-
-        const filtered = allDaycares.filter(daycare => favoriteIds.includes(daycare.id));
-        setFavorites(filtered);
-      } catch (error) {
-        console.error('Error loading favorites:', error);
-      } finally {
-        setFavoritesLoading(false);
-      }
-    };
-
-    if (user && activeTab === 'favorites') {
-      fetchFavorites();
+  // Transform API favorites to Daycare format
+  const favorites = useMemo(() => {
+    if (!apiFavorites || apiFavorites.length === 0) {
+      return [];
     }
-  }, [user, activeTab]);
+
+    return apiFavorites
+      .filter((favorite) => favorite.daycare) // Filter out favorites without daycare data
+      .map((favorite) => {
+        const daycare = favorite.daycare!;
+        const daycareId = daycare._id || daycare.id || favorite.daycareId;
+
+        return {
+          id: daycareId,
+          name: daycare.name || "Unnamed KinderBridge",
+          city: daycare.city || "",
+          address: daycare.address || "",
+          phone: daycare.phone || "",
+          email: daycare.email || "",
+          rating: (daycare.rating as number) || 0,
+          price: daycare.price || daycare.monthlyFee || 0,
+          priceString: daycare.priceString as string | undefined,
+          features: (daycare.features as string[]) || [],
+          ageRange: (daycare.ageRange as string) || "",
+          hours: daycare.hours as string || "",
+          images: (daycare.images as string[]) || [],
+          description: (daycare.description as string) || "",
+        };
+      });
+  }, [apiFavorites]);
 
   const removeFavorite = (id: string) => {
-    // Update local state
-    setFavorites(favorites.filter(f => f.id !== id));
-    
-    // Update localStorage
-    const savedFavorites = localStorage.getItem('daycare-favorites');
-    if (savedFavorites) {
-      try {
-        const parsed = JSON.parse(savedFavorites);
-        const favoriteIds = parsed.map((item: string | { id: string }) => 
-          typeof item === 'object' && item !== null ? item.id : item
-        );
-        const updated = favoriteIds.filter((fId: string) => fId !== id);
-        localStorage.setItem('daycare-favorites', JSON.stringify(updated));
-      } catch (e) {
-        console.error('Error updating favorites:', e);
-      }
-    }
+    removeFavoriteAPI(id);
   };
 
   const addTimeSlot = () => {
