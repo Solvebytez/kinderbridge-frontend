@@ -366,6 +366,10 @@ export default function SearchPage() {
       const response = await apiClient.get("/api/daycares/regions/all");
       return response.data;
     },
+    staleTime: 15 * 60 * 1000, // 15 minutes - regions rarely change
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep cached longer
+    refetchOnMount: false, // Don't refetch if we have cached data
+    refetchOnWindowFocus: false,
   });
 
   const regions: string[] = Array.isArray(regionsResponse?.data)
@@ -384,6 +388,10 @@ export default function SearchPage() {
       );
       return response.data;
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - cities by region rarely change
+    gcTime: 20 * 60 * 1000, // 20 minutes - keep cached longer
+    refetchOnMount: false, // Don't refetch if we have cached data
+    refetchOnWindowFocus: false,
   });
 
   const cityWardOptions: string[] = Array.isArray(citiesResponse?.data)
@@ -400,6 +408,10 @@ export default function SearchPage() {
         const response = await apiClient.get("/api/daycares/program-ages/all");
         return response.data;
       },
+      staleTime: 15 * 60 * 1000, // 15 minutes - program ages rarely change
+      gcTime: 30 * 60 * 1000, // 30 minutes - keep cached longer
+      refetchOnMount: false, // Don't refetch if we have cached data
+      refetchOnWindowFocus: false,
     }
   );
 
@@ -426,6 +438,10 @@ export default function SearchPage() {
       return response.data;
     },
     enabled: !!selectedRegion || !!selectedWard, // Only fetch when region or city is selected
+    staleTime: 10 * 60 * 1000, // 10 minutes - types may change but not frequently
+    gcTime: 20 * 60 * 1000, // 20 minutes - keep cached longer
+    refetchOnMount: false, // Don't refetch if we have cached data
+    refetchOnWindowFocus: false,
   });
 
   const availableTypes: string[] = Array.isArray(typesResponse?.data)
@@ -592,7 +608,10 @@ export default function SearchPage() {
       }
     },
     enabled: !!user && !authLoading, // Only fetch if user is logged in
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep cached longer
+    refetchOnMount: false, // Don't refetch if we have cached data
+    refetchOnWindowFocus: false,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

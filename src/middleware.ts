@@ -509,51 +509,95 @@ export async function middleware(request: NextRequest) {
           console.log("🔄 Checking authentication status...");
           lastRefreshTime.set(refreshToken, now);
 
-          const apiUrl = getApiBaseUrl();
-          
-          // Forward all cookies from the incoming request to the backend
-          const cookieHeader = request.headers.get("cookie") || "";
-          
-          const refreshResponse = await fetch(`${apiUrl}/api/auth/refresh`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Cookie: cookieHeader, // Forward all cookies from the request
-            },
-            credentials: "include",
-          });
-
-          if (refreshResponse.ok) {
-            const refreshData: RefreshResponse = await refreshResponse.json();
-            const userType = refreshData.data?.user?.userType;
-            const userEmail = refreshData.data?.user?.email;
-
-            if (userType && userEmail) {
-              console.log("✅ User authenticated, redirecting to /search");
-
-              // Cache the response
-              const userId =
-                refreshData.data?.user?._id || refreshData.data?.user?.id;
-              const stableCacheKey = userId || refreshToken;
-              tokenCache.set(stableCacheKey, {
-                data: refreshData,
-                expires: now + TOKEN_CACHE_MS,
-              });
-
-              // Redirect to /search
-              const redirectResponse = NextResponse.redirect(
-                new URL("/search", request.url)
-              );
-
-              // Forward cookies from backend
-              const setCookieHeader = refreshResponse.headers.get("set-cookie");
-              if (setCookieHeader) {
-                redirectResponse.headers.set("set-cookie", setCookieHeader);
-              }
-
-              return redirectResponse;
+          try {
+            const apiUrl = getApiBaseUrl();
+            
+            // Forward all cookies from the incoming request to the backend
+            const cookieHeader = request.headers.get("cookie") || "";
+            
+            // Add timeout to prevent blocking navigation (Edge Runtime supports AbortController)
+            let controller: AbortController | null = null;
+            let timeoutId: ReturnType<typeof setTimeout> | null = null;
+            
+            try {
+              controller = new AbortController();
+              timeoutId = setTimeout(() => controller!.abort(), 3000); // 3 second timeout
+            } catch (e) {
+              // AbortController not available, continue without timeout
+              console.log("⚠️ AbortController not available, proceeding without timeout");
             }
+            
+            const fetchOptions: RequestInit = {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Cookie: cookieHeader, // Forward all cookies from the request
+              },
+              credentials: "include",
+            };
+            
+            if (controller) {
+              fetchOptions.signal = controller.signal;
+            }
+            
+            const refreshResponse = await fetch(`${apiUrl}/api/auth/refresh`, fetchOptions);
+
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+
+            if (refreshResponse.ok) {
+              const refreshData: RefreshResponse = await refreshResponse.json();
+              const userType = refreshData.data?.user?.userType;
+              const userEmail = refreshData.data?.user?.email;
+
+              if (userType && userEmail) {
+                console.log("✅ User authenticated, redirecting to /search");
+
+                // Cache the response
+                const userId =
+                  refreshData.data?.user?._id || refreshData.data?.user?.id;
+                const stableCacheKey = userId || refreshToken;
+                tokenCache.set(stableCacheKey, {
+                  data: refreshData,
+                  expires: now + TOKEN_CACHE_MS,
+                });
+
+                // Redirect to /search
+                const redirectResponse = NextResponse.redirect(
+                  new URL("/search", request.url)
+                );
+
+                // Forward cookies from backend
+                const setCookieHeader = refreshResponse.headers.get("set-cookie");
+                if (setCookieHeader) {
+                  redirectResponse.headers.set("set-cookie", setCookieHeader);
+                }
+
+                return redirectResponse;
+              }
+            } else {
+              // Refresh failed - clear invalid token and allow access to auth page
+              console.log("❌ Token refresh failed, allowing access to auth page");
+              const response = NextResponse.next();
+              response.cookies.delete("refreshToken");
+              response.cookies.delete("accessToken");
+              return response;
+            }
+          } catch (fetchError) {
+            // Network error or timeout - allow access to auth page
+            console.error("💥 Error during token refresh:", fetchError);
+            // Clear potentially invalid tokens
+            const response = NextResponse.next();
+            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+              console.log("⏱️ Token refresh timed out, allowing access to auth page");
+            }
+            return response;
           }
+        } else {
+          // Throttled - allow access to auth page (user might want to login with different account)
+          console.log("⏱️ Refresh throttled, allowing access to auth page");
+          // Continue to allow access below
         }
       } catch (error) {
         console.error("💥 Error checking auth status:", error);

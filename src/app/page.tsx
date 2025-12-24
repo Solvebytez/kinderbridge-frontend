@@ -34,6 +34,10 @@ export default function HomePage() {
       const response = await apiClient.get("/api/daycares/regions/all");
       return response.data;
     },
+    staleTime: 15 * 60 * 1000, // 15 minutes - regions rarely change
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep cached longer
+    refetchOnMount: false, // Don't refetch if we have cached data
+    refetchOnWindowFocus: false,
   });
 
   const regions: string[] = useMemo(() => {
