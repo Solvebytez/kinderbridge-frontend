@@ -9,6 +9,7 @@ import MessagingSystem from "../../components/MessagingSystem";
 import Navigation from "../../components/Navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFavorites } from "../../hooks/useFavorites";
+import { useDebounce } from "../../hooks/useDebounce";
 import daycaresLocalData from "../../data/daycares.json";
 import SearchSummary from "./components/SearchSummary";
 import RecentlyViewed from "./components/RecentlyViewed";
@@ -78,8 +79,10 @@ export default function SearchPage() {
   }, [user, authLoading]);
   const [recentlyViewed, setRecentlyViewed] = useState<Daycare[]>([]);
 
-  // Debounced search query
-  const [debouncedSearchQuery] = useState("");
+  // Search query state
+  const [searchQuery, setSearchQuery] = useState("");
+  // Debounced search query (500ms delay)
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Messaging state
   const [showMessaging, setShowMessaging] = useState(false);
@@ -896,7 +899,11 @@ export default function SearchPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Search Form */}
           <form
-            onSubmit={() => {}}
+            onSubmit={(e) => {
+              e.preventDefault();
+              // Reset to first page when searching
+              setCurrentPage(1);
+            }}
             className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50 mb-6"
           >
             <div className="text-center mb-4">
@@ -913,8 +920,12 @@ export default function SearchPage() {
                 <input
                   type="text"
                   placeholder="Search daycares, features, or descriptions..."
-                  value={""}
-                  onChange={() => {}}
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    // Reset to first page when typing
+                    setCurrentPage(1);
+                  }}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm transition-all duration-200 hover:shadow-md"
                 />
               </div>

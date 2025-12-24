@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useContactLogs } from "@/hooks/useContactLogs";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FilterPanelProps {
   isLoading: boolean;
@@ -122,7 +123,8 @@ export default function FilterPanel({
   onAddContactLog,
   typeOptions,
 }: FilterPanelProps) {
-  // Fetch contact logs
+  const { user, isLoading: authLoading } = useAuth();
+  // Fetch contact logs (only for logged-in users)
   const { contactLogs, isLoading: isLoadingContactLogs } = useContactLogs();
 
   // Get latest 3 contact logs
@@ -758,9 +760,10 @@ export default function FilterPanel({
         )}
       </div>
 
-      {/* Contact Log Card Group - Always Open */}
-      <div className="mb-6">
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+      {/* Contact Log Card Group - Only show when user is logged in */}
+      {user && !authLoading && (
+        <div className="mb-6">
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <FileText className="h-5 w-5 text-gray-600 mr-2" />
@@ -870,7 +873,8 @@ export default function FilterPanel({
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
