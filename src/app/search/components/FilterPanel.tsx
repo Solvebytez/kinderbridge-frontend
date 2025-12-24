@@ -268,12 +268,12 @@ export default function FilterPanel({
   if (isLoading && displayedDaycaresLength === 0) {
     return (
       <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50 sticky top-8 animate-pulse">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gray-200 rounded-lg mr-3"></div>
             <div className="h-6 w-20 bg-gray-200 rounded"></div>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             <div className="h-8 w-24 bg-gray-200 rounded-lg"></div>
             <div className="h-8 w-24 bg-gray-200 rounded-lg"></div>
           </div>
@@ -293,14 +293,14 @@ export default function FilterPanel({
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50 sticky top-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
             <Filter className="h-5 w-5 text-blue-600" />
           </div>
           <h2 className="text-xl font-bold text-gray-900">Filters</h2>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() =>
               setExpandedSections({

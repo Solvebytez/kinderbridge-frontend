@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Daycare } from "./SearchResults";
 import { formatDaycarePrice } from "../../../utils/priceFormatter";
+import { MapPin, Star, X } from "lucide-react";
 import type { GoogleMap, GoogleMarker, GoogleGeocoder, GoogleInfoWindow } from "@/types/google-maps";
 
 interface MapViewProps {
@@ -23,6 +24,7 @@ export default function MapView({
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [geocodingProgress, setGeocodingProgress] = useState(0);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [selectedDaycare, setSelectedDaycare] = useState<Daycare | null>(null);
 
   // Load Google Maps script
   useEffect(() => {
@@ -187,15 +189,23 @@ export default function MapView({
     const withoutCoordinates: Daycare[] = [];
 
     daycares.forEach((daycare) => {
+      // Check if coordinates exist and are valid (not 0,0)
       if (
         daycare.coordinates &&
         daycare.coordinates.lat !== 0 &&
         daycare.coordinates.lng !== 0
       ) {
+        // Use database coordinates directly (fast path)
         withCoordinates.push(daycare);
-      } else {
+      } else if (
+        !daycare.coordinates ||
+        daycare.coordinates.lat === undefined ||
+        daycare.coordinates.lng === undefined
+      ) {
+        // Only geocode if coordinates are missing/null/undefined (not 0,0)
         withoutCoordinates.push(daycare);
       }
+      // Skip records with 0,0 coordinates entirely - don't add to either array
     });
 
     // Add markers for daycares with coordinates
@@ -222,27 +232,9 @@ export default function MapView({
         },
       });
 
-      if (onMarkerClick) {
-        marker.addListener("click", () => {
-          onMarkerClick(daycare);
-        });
-      }
-
-      // Add info window
-      const formattedPrice = formatDaycarePrice(daycare.price, daycare.priceString);
-      const infoWindow = new window.google.maps.InfoWindow({
-        content: `
-          <div style="padding: 8px; min-width: 200px;">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${daycare.name}</h3>
-            <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">${daycare.address}</p>
-            <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">${daycare.city}</p>
-            <p style="margin: 8px 0 0 0; color: #4285F4; font-size: 14px; font-weight: bold;">${formattedPrice}</p>
-          </div>
-        `,
-      });
-
+      // Handle marker click - show card instead of InfoWindow
       marker.addListener("click", () => {
-        infoWindow.open(map, marker);
+        setSelectedDaycare(daycare);
       });
 
       markersRef.current.push(marker);
@@ -288,27 +280,9 @@ export default function MapView({
                   },
                 });
 
-                if (onMarkerClick) {
-                  marker.addListener("click", () => {
-                    onMarkerClick(daycare);
-                  });
-                }
-
-                // Add info window
-                const formattedPrice = formatDaycarePrice(daycare.price, daycare.priceString);
-                const infoWindow = new window.google.maps.InfoWindow({
-                  content: `
-                    <div style="padding: 8px; min-width: 200px;">
-                      <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${daycare.name}</h3>
-                      <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">${daycare.address}</p>
-                      <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">${daycare.city}</p>
-                      <p style="margin: 8px 0 0 0; color: #4285F4; font-size: 14px; font-weight: bold;">${formattedPrice}</p>
-                    </div>
-                  `,
-                });
-
+                // Handle marker click - show card instead of InfoWindow
                 marker.addListener("click", () => {
-                  infoWindow.open(map, marker);
+                  setSelectedDaycare(daycare);
                 });
 
                 markersRef.current.push(marker);
@@ -362,6 +336,12 @@ export default function MapView({
     );
   }
 
+  const handleViewDetails = () => {
+    if (selectedDaycare && onMarkerClick) {
+      onMarkerClick(selectedDaycare);
+    }
+  };
+
   return (
     <div className="relative w-full h-[600px] rounded-xl overflow-hidden border border-gray-200 shadow-lg">
       {isGeocoding && (
@@ -375,6 +355,50 @@ export default function MapView({
         </div>
       )}
       <div ref={mapRef} className="w-full h-full" />
+      
+      {/* Daycare Detail Card */}
+      {selectedDaycare && (
+        <div className="absolute bottom-4 left-4 right-4 z-10 bg-white rounded-xl shadow-xl border border-gray-200 p-4 max-w-md mx-auto">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-gray-900 mb-1 truncate">
+                {selectedDaycare.name}
+              </h3>
+              <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{selectedDaycare.city}</span>
+              </div>
+              <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                {selectedDaycare.address}
+              </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                  <span className="text-sm font-semibold text-gray-900">
+                    {selectedDaycare.rating}
+                  </span>
+                </div>
+                <div className="text-lg font-bold text-green-600">
+                  {formatDaycarePrice(selectedDaycare.price, selectedDaycare.priceString)}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedDaycare(null)}
+              className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <button
+            onClick={handleViewDetails}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
+          >
+            View Details
+          </button>
+        </div>
+      )}
     </div>
   );
 }
