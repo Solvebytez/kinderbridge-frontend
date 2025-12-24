@@ -612,9 +612,6 @@ export default function SearchPage() {
     gcTime: 10 * 60 * 1000, // 10 minutes - keep cached longer
     refetchOnMount: false, // Don't refetch if we have cached data
     refetchOnWindowFocus: false,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
   });
 
   // Extract data from query response
