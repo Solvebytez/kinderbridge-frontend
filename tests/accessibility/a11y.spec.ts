@@ -79,7 +79,7 @@ test.describe('Accessibility Testing', () => {
     
     // Filter for color contrast violations
     const contrastViolations = accessibilityScanResults.violations.filter(
-      violation => violation.id === 'color-contrast'
+      (violation: { id: string }) => violation.id === 'color-contrast'
     )
     
     expect(contrastViolations).toEqual([])

@@ -119,7 +119,7 @@ export default function ProviderDashboard() {
           city: daycare.city || "",
           address: daycare.address || "",
           phone: (daycare.phone as string) || "",
-          email: daycare.email || "",
+          email: (daycare.email as string | undefined) || "",
           rating: (daycare.rating as number) || 0,
           price: daycare.price || daycare.monthlyFee || 0,
           priceString: daycare.priceString as string | undefined,

@@ -70,7 +70,7 @@ test.describe('Performance Testing', () => {
       return new Promise((resolve) => {
         new PerformanceObserver((list) => {
           const entries = list.getEntries()
-          const firstEntry = entries[0]
+          const firstEntry = entries[0] as PerformanceEventTiming
           resolve(firstEntry.processingStart - firstEntry.startTime)
         }).observe({ entryTypes: ['first-input'] })
       })

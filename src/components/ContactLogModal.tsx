@@ -254,7 +254,7 @@ export default function ContactLogModal({
         daycareId: formData.daycareId,
         contactMethod: formData.contactMethod,
         purpose: formData.purpose,
-        notes: formData.notes || undefined,
+        notes: formData.notes,
         outcome: formData.outcome || undefined,
         followUpDate: formData.followUpDate || undefined,
       },
