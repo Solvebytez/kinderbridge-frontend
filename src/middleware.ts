@@ -98,7 +98,12 @@ function handleUserTypeRedirect(
     ];
     if (!parentRoutes.some((route) => pathname.startsWith(route))) {
       console.log(`🚫 Access denied: PARENT cannot access ${pathname}`);
-      return NextResponse.redirect(new URL("/parent/dashboard", request.url));
+      const redirectUrl = new URL("/parent/dashboard", request.url);
+      // Preserve query parameters from original request
+      request.nextUrl.searchParams.forEach((value, key) => {
+        redirectUrl.searchParams.set(key, value);
+      });
+      return NextResponse.redirect(redirectUrl);
     }
     console.log("✅ PARENT access granted");
   } else if (userType === "provider") {
@@ -106,7 +111,12 @@ function handleUserTypeRedirect(
     const providerRoutes = ["/provider", "/profile", "/search"];
     if (!providerRoutes.some((route) => pathname.startsWith(route))) {
       console.log(`🚫 Access denied: PROVIDER cannot access ${pathname}`);
-      return NextResponse.redirect(new URL("/provider/dashboard", request.url));
+      const redirectUrl = new URL("/provider/dashboard", request.url);
+      // Preserve query parameters from original request
+      request.nextUrl.searchParams.forEach((value, key) => {
+        redirectUrl.searchParams.set(key, value);
+      });
+      return NextResponse.redirect(redirectUrl);
     }
     console.log("✅ PROVIDER access granted");
   } else if (userType === "employer" || userType === "employee") {
@@ -116,7 +126,12 @@ function handleUserTypeRedirect(
       console.log(
         `🚫 Access denied: ${userType.toUpperCase()} cannot access ${pathname}`
       );
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      const redirectUrl = new URL("/dashboard", request.url);
+      // Preserve query parameters from original request
+      request.nextUrl.searchParams.forEach((value, key) => {
+        redirectUrl.searchParams.set(key, value);
+      });
+      return NextResponse.redirect(redirectUrl);
     }
     console.log(`✅ ${userType.toUpperCase()} access granted`);
   }
