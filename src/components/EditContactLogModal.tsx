@@ -272,25 +272,24 @@ export default function EditContactLogModal({
       return;
     }
 
-    if (!formData.notes || formData.notes.trim().length < 10) {
-      setError("Notes must be at least 10 characters long");
-      return;
-    }
-
     // Prepare update data
     const updateData: {
       daycareId: string;
       contactMethod: string;
       purpose: string;
-      notes: string;
+      notes?: string;
       outcome?: string;
       followUpDate?: string;
     } = {
       daycareId: formData.daycareId,
       contactMethod: formData.contactMethod,
       purpose: formData.purpose,
-      notes: formData.notes.trim(),
     };
+
+    // Only include notes if provided
+    if (formData.notes && formData.notes.trim()) {
+      updateData.notes = formData.notes.trim();
+    }
 
     if (formData.outcome && formData.outcome.trim()) {
       updateData.outcome = formData.outcome.trim();
@@ -572,7 +571,7 @@ export default function EditContactLogModal({
               {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes <span className="text-red-500">*</span>
+                  Notes (optional)
                 </label>
                 <textarea
                   value={formData.notes}
@@ -580,14 +579,13 @@ export default function EditContactLogModal({
                     setFormData({ ...formData, notes: e.target.value })
                   }
                   disabled={isUpdatingContactLog}
-                  rows={5}
+                  rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
-                  placeholder="Enter notes (minimum 10 characters)"
-                  required
-                  minLength={10}
+                  placeholder="What happened during this contact?"
+                  maxLength={1000}
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  {formData.notes.length}/1000 characters (minimum 10)
+                  {formData.notes.length}/1000 characters
                 </p>
               </div>
 
