@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import Link from "next/link";
@@ -14,17 +14,81 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const isRedirectingRef = useRef(false);
 
   // Note: All users redirect to /search page after login
   // Dashboard URLs are no longer used for post-login redirects
 
-  // Redirect if already logged in - always go to search page
+  // Redirect if already logged in - check for redirect param or saved URL first
+  // This only runs if we're NOT in the middle of a login redirect
   useEffect(() => {
-    if (!authLoading && user) {
-      // User is already logged in, redirect to search page
+    if (!authLoading && user && !isRedirectingRef.current) {
+      // User is already logged in, check for redirect
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectParam = urlParams.get("redirect");
+      
+      if (redirectParam) {
+        const validatedUrl = validateRedirectUrl(redirectParam);
+        if (validatedUrl) {
+          isRedirectingRef.current = true;
+          router.push(validatedUrl);
+          return;
+        }
+      }
+      
+      // Check localStorage backup
+      try {
+        const savedSearchUrl = localStorage.getItem("searchRedirectUrl");
+        if (savedSearchUrl) {
+          const validatedUrl = validateRedirectUrl(savedSearchUrl);
+          if (validatedUrl) {
+            localStorage.removeItem("searchRedirectUrl");
+            isRedirectingRef.current = true;
+            router.push(validatedUrl);
+            return;
+          }
+        }
+      } catch (error) {
+        // Silent fail
+      }
+      
+      // Default to search page
+      isRedirectingRef.current = true;
       router.push("/search");
     }
   }, [user, authLoading, router]);
+
+  // Validate redirect URL to ensure security (same origin, relative path)
+  const validateRedirectUrl = (url: string): string | null => {
+    try {
+      // Decode the URL if it's encoded
+      const decodedUrl = decodeURIComponent(url);
+      
+      // Only allow relative paths (starting with /)
+      if (!decodedUrl.startsWith("/")) {
+        return null;
+      }
+      
+      // Prevent redirect to auth pages to avoid loops
+      if (decodedUrl.startsWith("/login") || decodedUrl.startsWith("/register")) {
+        return null;
+      }
+      
+      // Try to construct a URL to validate it's safe
+      const fullUrl = new URL(decodedUrl, window.location.origin);
+      
+      // Ensure it's same origin
+      if (fullUrl.origin !== window.location.origin) {
+        return null;
+      }
+      
+      // Return the pathname + search (relative path)
+      const result = fullUrl.pathname + fullUrl.search;
+      return result;
+    } catch (error) {
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,21 +98,85 @@ export default function LoginPage() {
     try {
       const success = await login(email, password);
       if (success) {
-        // Always redirect to search page after successful login
-        // Check if there are original search parameters to preserve
+        // Set flag to prevent useEffect from interfering
+        isRedirectingRef.current = true;
+        
+        // Small delay to ensure login state is fully updated
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Get redirect parameter from URL - read it multiple ways to be sure
         const urlParams = new URLSearchParams(window.location.search);
-        const originalParams = urlParams.get("params");
-
-        if (originalParams) {
-          router.push(`/search?${originalParams}`);
-        } else {
-          router.push("/search");
+        const redirectParam = urlParams.get("redirect");
+        
+        // Also try reading from window.location.search directly
+        const currentSearch = window.location.search;
+        const directRedirectMatch = currentSearch.match(/[?&]redirect=([^&]+)/);
+        const directRedirectParam = directRedirectMatch ? decodeURIComponent(directRedirectMatch[1]) : null;
+        
+        // Use redirectParam or directRedirectParam
+        const finalRedirectParam = redirectParam || directRedirectParam;
+        
+        // Validate and use redirect URL if provided
+        let redirectUrl: string | null = null;
+        
+        if (finalRedirectParam) {
+          redirectUrl = validateRedirectUrl(finalRedirectParam);
+          if (redirectUrl) {
+            // Clear localStorage backup since we're using redirect param
+            try {
+              localStorage.removeItem("searchRedirectUrl");
+            } catch (error) {
+              // Silent fail
+            }
+          }
+        }
+        
+        // Fallback 1: Check localStorage for saved search URL (check BEFORE clearing)
+        if (!redirectUrl) {
+          try {
+            const savedSearchUrl = localStorage.getItem("searchRedirectUrl");
+            if (savedSearchUrl) {
+              redirectUrl = validateRedirectUrl(savedSearchUrl);
+              if (redirectUrl) {
+                // Only clear after successful validation and redirect
+                // Don't clear yet - let the redirect happen first
+              } else {
+                localStorage.removeItem("searchRedirectUrl");
+              }
+            }
+          } catch (error) {
+            // Silent fail
+          }
+        }
+        
+        // Fallback 2: Check if there are original search parameters to preserve
+        if (!redirectUrl) {
+          const originalParams = urlParams.get("params");
+          if (originalParams) {
+            redirectUrl = `/search?${originalParams}`;
+          } else {
+            redirectUrl = "/search";
+          }
+        }
+        
+        // Clear localStorage only after we've determined the redirect URL
+        if (redirectUrl && redirectUrl !== "/search") {
+          try {
+            localStorage.removeItem("searchRedirectUrl");
+          } catch (error) {
+            // Silent fail
+          }
+        }
+        
+        // Use window.location.href for a full page navigation to ensure URL is preserved
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+          return;
         }
       } else {
         setError("Invalid email or password");
       }
     } catch (error) {
-      console.error("Login error:", error);
       setError("An error occurred during login");
     } finally {
       setIsLoading(false);

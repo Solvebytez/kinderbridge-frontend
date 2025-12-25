@@ -274,11 +274,14 @@ export async function middleware(request: NextRequest) {
 
     if (!refreshToken) {
       console.log("❌ No refresh token found, redirecting to login");
-      const response = NextResponse.redirect(new URL("/login", request.url));
+      // Build redirect URL with original pathname and query params
+      const redirectUrl = new URL("/login", request.url);
+      const originalUrl = pathname + request.nextUrl.search;
+      redirectUrl.searchParams.set("redirect", originalUrl);
+      const response = NextResponse.redirect(redirectUrl);
       response.cookies.delete("accessToken");
       response.cookies.delete("refreshToken");
       response.headers.set("x-clear-auth", "true");
-      response.headers.set("x-redirect", pathname);
       return response;
     }
 
@@ -331,9 +334,10 @@ export async function middleware(request: NextRequest) {
             console.log(
               "❌ Invalid throttled cached data, clearing cookies and redirecting to login"
             );
-            const response = NextResponse.redirect(
-              new URL("/login", request.url)
-            );
+            const redirectUrl = new URL("/login", request.url);
+            const originalUrl = pathname + request.nextUrl.search;
+            redirectUrl.searchParams.set("redirect", originalUrl);
+            const response = NextResponse.redirect(redirectUrl);
             response.cookies.delete("refreshToken");
             response.cookies.delete("accessToken");
             response.headers.set("x-clear-auth", "true");
@@ -344,9 +348,10 @@ export async function middleware(request: NextRequest) {
           console.log(
             "❌ No cached data during throttle, clearing cookies and redirecting to login"
           );
-          const response = NextResponse.redirect(
-            new URL("/login", request.url)
-          );
+          const redirectUrl = new URL("/login", request.url);
+          const originalUrl = pathname + request.nextUrl.search;
+          redirectUrl.searchParams.set("redirect", originalUrl);
+          const response = NextResponse.redirect(redirectUrl);
           response.cookies.delete("refreshToken");
           response.cookies.delete("accessToken");
           response.headers.set("x-clear-auth", "true");
@@ -449,7 +454,10 @@ export async function middleware(request: NextRequest) {
           "❌ Invalid user data in refresh response - missing userType or email"
         );
         // Invalid user data - clear cookies and redirect to login
-        const response = NextResponse.redirect(new URL("/login", request.url));
+        const redirectUrl = new URL("/login", request.url);
+        const originalUrl = pathname + request.nextUrl.search;
+        redirectUrl.searchParams.set("redirect", originalUrl);
+        const response = NextResponse.redirect(redirectUrl);
         response.cookies.delete("refreshToken");
         response.cookies.delete("accessToken");
         response.headers.set("x-clear-auth", "true");
@@ -457,7 +465,10 @@ export async function middleware(request: NextRequest) {
       }
     } catch (error) {
       console.error("💥 Middleware error:", error);
-      const response = NextResponse.redirect(new URL("/login", request.url));
+      const redirectUrl = new URL("/login", request.url);
+      const originalUrl = pathname + request.nextUrl.search;
+      redirectUrl.searchParams.set("redirect", originalUrl);
+      const response = NextResponse.redirect(redirectUrl);
       response.cookies.delete("refreshToken");
       response.cookies.delete("accessToken");
       response.headers.set("x-clear-auth", "true");

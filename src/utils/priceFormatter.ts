@@ -9,18 +9,6 @@ export function formatDaycarePrice(
   price?: number | string | null,
   priceString?: string | null
 ): string {
-  // Debug logging - detailed
-  console.log("💰💰💰 formatDaycarePrice INPUT:", {
-    price: price,
-    priceType: typeof price,
-    priceString: priceString,
-    priceStringType: typeof priceString,
-    priceStringLength: priceString?.length,
-    priceStringTrimmed: priceString?.trim(),
-    isPriceStringNO: priceString === "NO",
-    isPriceStringEmpty: !priceString || priceString.trim() === "",
-  });
-
   // PRIORITY 1: If priceString exists and is not empty/NO, format it
   if (priceString && priceString !== "NO" && priceString.trim() !== "") {
     const formatted = priceString.trim();
@@ -57,47 +45,35 @@ export function formatDaycarePrice(
 
   // PRIORITY 2: Check if price itself is a string that looks like a range
   if (price !== null && price !== undefined && typeof price === "string") {
-    console.log("   - Checking price as string...");
     const cleaned = price
       .replace(/\/month/gi, "")
       .replace(/^\$/, "")
       .trim();
-    console.log("   - cleaned price:", cleaned);
 
     // If it contains a dash, format as range
     if (cleaned.includes("-")) {
-      console.log("   - Detected dash in price string, splitting...");
       const parts = cleaned.split("-").map((p) => p.trim());
-      console.log("   - parts:", parts);
       if (parts.length === 2) {
         const min = parts[0].replace(/\$/g, "").trim();
         const max = parts[1].replace(/\$/g, "").trim();
-        const result = `${min}$ - ${max}$`;
-        console.log("   - ✅ RESULT (range from price string):", result);
-        return result;
+        return `${min}$ - ${max}$`;
       }
     }
 
     // Try to parse as number
     const numPrice = parseFloat(cleaned.replace(/[^0-9.]/g, ""));
     if (!isNaN(numPrice) && numPrice > 0) {
-      const result = `${numPrice.toLocaleString()}$`;
-      console.log("   - ✅ RESULT (single from price string):", result);
-      return result;
+      return `${numPrice.toLocaleString()}$`;
     }
-    console.log("   - ✅ RESULT (price string as-is):", cleaned);
     return cleaned;
   }
 
   // PRIORITY 3: Fallback to numeric price (format as "1500$")
   if (price !== null && price !== undefined) {
     if (typeof price === "number" && price > 0) {
-      const result = `${price.toLocaleString()}$`;
-      console.log("   - ✅ RESULT (fallback numeric):", result);
-      return result;
+      return `${price.toLocaleString()}$`;
     }
   }
 
-  console.log("   - ✅ RESULT (default): 0$");
   return "0$";
 }

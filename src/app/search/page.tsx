@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Filter } from "lucide-react";
 import Link from "next/link";
 import { apiClient } from "../../lib/api";
@@ -43,7 +44,9 @@ interface Daycare {
   };
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const {
     favorites: apiFavorites,
@@ -102,17 +105,287 @@ export default function SearchPage() {
     availability: false,
   });
 
-  // Read location from URL query parameter and auto-select region
+  // Track if filters have been initialized from URL to prevent loops
+  const [filtersInitialized, setFiltersInitialized] = useState(false);
+  
+  // Track if we're updating URL ourselves to prevent sync loops
+  const isUpdatingUrlRef = useRef(false);
+  
+  // Track initial region to prevent clearing ward on initial load
+  const initialRegionRef = useRef<string | null>(null);
+  
+  // Track previous filter values to detect changes and reset page
+  const prevFiltersRef = useRef({
+    debouncedSearchQuery: "",
+    selectedRegion: "",
+    selectedPriceRange: "",
+    selectedTypes: [] as string[],
+    selectedAgeRange: [] as string[],
+    selectedProgramAges: [] as string[],
+    selectedAvailability: [] as string[],
+    selectedWard: "",
+    cwelccParticipating: false,
+    acceptsSubsidy: false,
+    sortBy: "name",
+    sortOrder: "asc",
+  });
+
+  // Sync filters with URL when URL changes (browser back/forward navigation)
+  // This effect only runs when searchParams changes externally (browser navigation)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const locationParam = params.get("location");
-      if (locationParam) {
-        // Set the region filter to the location from URL
-        setSelectedRegion(locationParam.trim());
+    // Don't run during initialization or when we're updating URL ourselves
+    // Also add a small delay to ensure initialization completes first
+    if (!filtersInitialized || isUpdatingUrlRef.current) {
+      return;
+    }
+    
+    const params = searchParams;
+    
+    
+    // Build what the current URL should be based on current state
+    const currentParams = new URLSearchParams();
+    if (debouncedSearchQuery) currentParams.set("q", debouncedSearchQuery);
+    if (selectedRegion) currentParams.set("region", selectedRegion);
+    if (selectedPriceRange) currentParams.set("priceRange", selectedPriceRange);
+    if (selectedTypes.length > 0) currentParams.set("types", selectedTypes.join(","));
+    if (selectedAgeRange.length > 0) currentParams.set("ageRange", selectedAgeRange.join(","));
+    if (selectedProgramAges.length > 0) currentParams.set("programAges", selectedProgramAges.join(","));
+    if (selectedAvailability.length > 0) currentParams.set("availability", selectedAvailability.join(","));
+    if (selectedWard) currentParams.set("ward", selectedWard);
+    if (cwelccParticipating) currentParams.set("cwelcc", "true");
+    if (acceptsSubsidy) currentParams.set("subsidy", "true");
+    if (sortBy !== "name") currentParams.set("sortBy", sortBy);
+    if (sortOrder !== "asc") currentParams.set("sortOrder", sortOrder);
+    if (currentPage > 1) currentParams.set("page", currentPage.toString());
+    
+    const currentUrlParams = currentParams.toString();
+    const urlParams = params.toString();
+    
+    // Only sync if URL actually differs from current state (external navigation)
+    // Compare parameter sets (order-independent)
+    const currentParamsMap = new Map(currentParams.entries());
+    const urlParamsMap = new Map(params.entries());
+    
+    // Check if they're different
+    let paramsDiffer = currentParamsMap.size !== urlParamsMap.size;
+    if (!paramsDiffer) {
+      for (const [key, value] of currentParamsMap) {
+        if (urlParamsMap.get(key) !== value) {
+          paramsDiffer = true;
+          break;
+        }
       }
     }
-  }, []); // Run only once on mount
+    
+    // Only sync if parameters actually differ
+    if (!paramsDiffer) return;
+    
+    // Sync search query
+    const q = params.get("q") || "";
+    if (q !== debouncedSearchQuery) {
+      setSearchQuery(q);
+    }
+    
+    // Sync region (trim and decode to match initialization behavior)
+    const region = params.get("region") || params.get("location") || "";
+    if (region) {
+      const decodedRegion = decodeURIComponent(region.replace(/\+/g, " ")).trim();
+      if (decodedRegion !== selectedRegion) {
+        setSelectedRegion(decodedRegion);
+      }
+    } else if (selectedRegion) {
+      // If URL has no region but state has one, clear it
+      setSelectedRegion("");
+    }
+    
+    // Sync price range
+    const priceRange = params.get("priceRange") || "";
+    if (priceRange !== selectedPriceRange && ["low", "medium", "high", ""].includes(priceRange)) {
+      setSelectedPriceRange(priceRange);
+    }
+    
+    // Sync types
+    const types = params.get("types");
+    const typesArray = types ? types.split(",").filter(Boolean) : [];
+    if (JSON.stringify(typesArray) !== JSON.stringify(selectedTypes)) {
+      setSelectedTypes(typesArray);
+    }
+    
+    // Sync age range
+    const ageRange = params.get("ageRange");
+    const ageRangeArray = ageRange ? ageRange.split(",").filter(Boolean) : [];
+    if (JSON.stringify(ageRangeArray) !== JSON.stringify(selectedAgeRange)) {
+      setSelectedAgeRange(ageRangeArray);
+    }
+    
+    // Sync program ages
+    const programAges = params.get("programAges");
+    const programAgesArray = programAges ? programAges.split(",").filter(Boolean) : [];
+    if (JSON.stringify(programAgesArray) !== JSON.stringify(selectedProgramAges)) {
+      setSelectedProgramAges(programAgesArray);
+    }
+    
+    // Sync availability
+    const availability = params.get("availability");
+    const availabilityArray = availability ? availability.split(",").filter(Boolean) : [];
+    if (JSON.stringify(availabilityArray) !== JSON.stringify(selectedAvailability)) {
+      setSelectedAvailability(availabilityArray);
+    }
+    
+    // Sync ward (decode URL-encoded values)
+    const ward = params.get("ward") || "";
+    if (ward) {
+      const decodedWard = decodeURIComponent(ward.replace(/\+/g, " "));
+      if (decodedWard !== selectedWard) {
+        setSelectedWard(decodedWard);
+      }
+    } else if (selectedWard) {
+      // If URL has no ward but state has one, clear it
+      setSelectedWard("");
+    }
+    
+    // Sync boolean filters
+    const cwelcc = params.get("cwelcc") === "true";
+    if (cwelcc !== cwelccParticipating) {
+      setCwelccParticipating(cwelcc);
+    }
+    
+    const subsidy = params.get("subsidy") === "true";
+    if (subsidy !== acceptsSubsidy) {
+      setAcceptsSubsidy(subsidy);
+    }
+    
+    // Sync sort
+    const sortByParam = params.get("sortBy") || "name";
+    if (sortByParam !== sortBy) {
+      setSortBy(sortByParam);
+    }
+    
+    const sortOrderParam = params.get("sortOrder") || "asc";
+    if (sortOrderParam !== sortOrder && ["asc", "desc"].includes(sortOrderParam)) {
+      setSortOrder(sortOrderParam);
+    }
+    
+    // Sync page
+    const page = params.get("page");
+    const pageNum = page ? parseInt(page, 10) : 1;
+    if (!isNaN(pageNum) && pageNum > 0 && pageNum !== currentPage) {
+      setCurrentPage(pageNum);
+    }
+  }, [searchParams, filtersInitialized]); // Only depend on searchParams to detect external URL changes (browser navigation)
+
+  // Initialize all filters from URL query parameters on mount
+  // This MUST run before any sync effects
+  useEffect(() => {
+    if (filtersInitialized) {
+      return;
+    }
+    
+    // Check if we're returning from a details page and need to restore search URL
+    // Only restore if current URL has no parameters (user came back to /search without params)
+    const currentUrlHasParams = searchParams.toString().length > 0;
+    if (!currentUrlHasParams && typeof window !== "undefined" && window.location.pathname === "/search") {
+      try {
+        const savedSearchUrl = sessionStorage.getItem("lastSearchUrl");
+        if (savedSearchUrl && savedSearchUrl.startsWith("/search") && savedSearchUrl !== "/search") {
+          // Restore the saved search URL (only if it's different from current)
+          const urlParts = savedSearchUrl.split("?");
+          if (urlParts.length > 1) {
+            // Has query parameters, restore it
+            router.replace(savedSearchUrl);
+            // Clear the saved URL after using it
+            sessionStorage.removeItem("lastSearchUrl");
+            return; // Wait for URL to update before initializing
+          }
+        }
+      } catch (error) {
+        // Silent fail
+      }
+    }
+    
+    const params = searchParams;
+    
+    
+    // Read search query
+    const q = params.get("q");
+    if (q) setSearchQuery(q);
+    
+    // Read region (location or region param) - decode and trim
+    const region = params.get("region") || params.get("location");
+    if (region) {
+      const decodedRegion = decodeURIComponent(region.replace(/\+/g, " ")).trim();
+      setSelectedRegion(decodedRegion);
+    }
+    
+    // Read price range
+    const priceRange = params.get("priceRange");
+    if (priceRange && ["low", "medium", "high"].includes(priceRange)) {
+      setSelectedPriceRange(priceRange);
+    }
+    
+    // Read types (comma-separated)
+    const types = params.get("types");
+    if (types) {
+      setSelectedTypes(types.split(",").filter(Boolean));
+    }
+    
+    // Read age range (comma-separated)
+    const ageRange = params.get("ageRange");
+    if (ageRange) {
+      setSelectedAgeRange(ageRange.split(",").filter(Boolean));
+    }
+    
+    // Read program ages (comma-separated)
+    const programAges = params.get("programAges");
+    if (programAges) {
+      setSelectedProgramAges(programAges.split(",").filter(Boolean));
+    }
+    
+    // Read availability (comma-separated)
+    const availability = params.get("availability");
+    if (availability) {
+      setSelectedAvailability(availability.split(",").filter(Boolean));
+    }
+    
+    // Read ward (decode URL-encoded values like + to spaces)
+    const ward = params.get("ward");
+    if (ward) {
+      // Decode URL-encoded ward name (e.g., "Don+Valley+East" -> "Don Valley East")
+      const decodedWard = decodeURIComponent(ward.replace(/\+/g, " "));
+      setSelectedWard(decodedWard);
+    }
+    
+    // Read boolean filters - always set (even if false) to ensure UI reflects URL state
+    const cwelcc = params.get("cwelcc");
+    const cwelccValue = cwelcc === "true";
+    setCwelccParticipating(cwelccValue);
+    
+    const subsidy = params.get("subsidy");
+    const subsidyValue = subsidy === "true";
+    setAcceptsSubsidy(subsidyValue);
+    
+    // Read sort
+    const sortByParam = params.get("sortBy");
+    if (sortByParam) setSortBy(sortByParam);
+    
+    const sortOrderParam = params.get("sortOrder");
+    if (sortOrderParam && ["asc", "desc"].includes(sortOrderParam)) {
+      setSortOrder(sortOrderParam);
+    }
+    
+    // Read page
+    const page = params.get("page");
+    if (page) {
+      const pageNum = parseInt(page, 10);
+      if (!isNaN(pageNum) && pageNum > 0) setCurrentPage(pageNum);
+    }
+    
+    // Mark as initialized after a small delay to ensure all state updates are processed
+    // This prevents the URL update effect from running before filters are set
+    setTimeout(() => {
+      setFiltersInitialized(true);
+    }, 0);
+  }, [searchParams, filtersInitialized]);
 
   // Get favorite IDs from API (only for logged-in users)
   const favorites = useMemo(() => {
@@ -127,11 +400,253 @@ export default function SearchPage() {
     }
   }, [user, apiFavorites]);
 
-  // Re-read URL parameters when user logs in (in case they came from a redirect)
+  // Restore search URL from localStorage if user just logged in and URL is empty
+  // This is a fallback in case the login page redirect didn't work
   useEffect(() => {
-    if (user && !authLoading) {
+    // Only run on client side and when user is logged in
+    if (typeof window === "undefined" || !user || authLoading) return;
+    
+    // Add a small delay to ensure login redirect has completed first
+    const timeoutId = setTimeout(() => {
+      // Check if we have a saved search URL and current URL has no search params
+      try {
+        const savedSearchUrl = localStorage.getItem("searchRedirectUrl");
+        const currentUrlHasParams = searchParams.toString().length > 0;
+        
+        // Only restore if we have a saved URL, current URL has no params, and we're on /search
+        if (savedSearchUrl && !currentUrlHasParams && window.location.pathname === "/search") {
+          const validatedUrl = validateRedirectUrl(savedSearchUrl);
+          if (validatedUrl && validatedUrl.startsWith("/search")) {
+            // Clear localStorage before redirecting
+            localStorage.removeItem("searchRedirectUrl");
+            // Use router.replace to update URL without adding to history
+            router.replace(validatedUrl);
+          } else {
+            // Invalid URL, clear it
+            localStorage.removeItem("searchRedirectUrl");
+          }
+        } else if (savedSearchUrl && currentUrlHasParams) {
+          // URL already has params, clear the saved one (redirect worked)
+          localStorage.removeItem("searchRedirectUrl");
+        }
+      } catch (error) {
+        // Silent fail
+      }
+    }, 500); // 500ms delay to let login redirect complete first
+    
+    return () => clearTimeout(timeoutId);
+  }, [user, authLoading, searchParams, router]);
+
+  // Helper function to save URL to localStorage reliably
+  const saveRedirectUrl = useCallback((url: string): boolean => {
+    try {
+      // Try to save
+      localStorage.setItem("searchRedirectUrl", url);
+      // Verify it was saved correctly
+      const saved = localStorage.getItem("searchRedirectUrl");
+      if (saved === url) {
+        return true;
+      }
+      // If verification failed, try one more time
+      localStorage.setItem("searchRedirectUrl", url);
+      const savedAgain = localStorage.getItem("searchRedirectUrl");
+      return savedAgain === url;
+    } catch (error) {
+      // localStorage might be disabled or full
+      return false;
     }
-  }, [user, authLoading]);
+  }, []);
+
+  // Helper function to validate redirect URL (same as in login page)
+  const validateRedirectUrl = (url: string): string | null => {
+    try {
+      const decodedUrl = decodeURIComponent(url);
+      if (!decodedUrl.startsWith("/")) return null;
+      if (decodedUrl.startsWith("/login") || decodedUrl.startsWith("/register")) return null;
+      const fullUrl = new URL(decodedUrl, window.location.origin);
+      if (fullUrl.origin !== window.location.origin) return null;
+      return fullUrl.pathname + fullUrl.search;
+    } catch {
+      return null;
+    }
+  };
+
+  // Reset page to 1 when filters change (except when page itself changes)
+  useEffect(() => {
+    if (!filtersInitialized) return;
+    
+    const currentFilters = {
+      debouncedSearchQuery,
+      selectedRegion,
+      selectedPriceRange,
+      selectedTypes,
+      selectedAgeRange,
+      selectedProgramAges,
+      selectedAvailability,
+      selectedWard,
+      cwelccParticipating,
+      acceptsSubsidy,
+      sortBy,
+      sortOrder,
+    };
+    
+    // Check if any filter (other than page) has changed
+    const filtersChanged = 
+      prevFiltersRef.current.debouncedSearchQuery !== currentFilters.debouncedSearchQuery ||
+      prevFiltersRef.current.selectedRegion !== currentFilters.selectedRegion ||
+      prevFiltersRef.current.selectedPriceRange !== currentFilters.selectedPriceRange ||
+      JSON.stringify(prevFiltersRef.current.selectedTypes) !== JSON.stringify(currentFilters.selectedTypes) ||
+      JSON.stringify(prevFiltersRef.current.selectedAgeRange) !== JSON.stringify(currentFilters.selectedAgeRange) ||
+      JSON.stringify(prevFiltersRef.current.selectedProgramAges) !== JSON.stringify(currentFilters.selectedProgramAges) ||
+      JSON.stringify(prevFiltersRef.current.selectedAvailability) !== JSON.stringify(currentFilters.selectedAvailability) ||
+      prevFiltersRef.current.selectedWard !== currentFilters.selectedWard ||
+      prevFiltersRef.current.cwelccParticipating !== currentFilters.cwelccParticipating ||
+      prevFiltersRef.current.acceptsSubsidy !== currentFilters.acceptsSubsidy ||
+      prevFiltersRef.current.sortBy !== currentFilters.sortBy ||
+      prevFiltersRef.current.sortOrder !== currentFilters.sortOrder;
+    
+    if (filtersChanged && currentPage > 1) {
+      setCurrentPage(1);
+    }
+    
+    // Update ref for next comparison
+    prevFiltersRef.current = currentFilters;
+  }, [
+    filtersInitialized,
+    debouncedSearchQuery,
+    selectedRegion,
+    selectedPriceRange,
+    selectedTypes,
+    selectedAgeRange,
+    selectedProgramAges,
+    selectedAvailability,
+    selectedWard,
+    cwelccParticipating,
+    acceptsSubsidy,
+    sortBy,
+    sortOrder,
+    currentPage,
+  ]);
+
+  // Update URL when filters change (but not during initial load)
+  useEffect(() => {
+    if (!filtersInitialized) return;
+    
+    const params = new URLSearchParams();
+    
+    // Add search query
+    if (debouncedSearchQuery) {
+      params.set("q", debouncedSearchQuery);
+    }
+    
+    // Add region
+    if (selectedRegion) {
+      params.set("region", selectedRegion);
+    }
+    
+    // Add price range
+    if (selectedPriceRange) {
+      params.set("priceRange", selectedPriceRange);
+    }
+    
+    // Add types
+    if (selectedTypes.length > 0) {
+      params.set("types", selectedTypes.join(","));
+    }
+    
+    // Add age range
+    if (selectedAgeRange.length > 0) {
+      params.set("ageRange", selectedAgeRange.join(","));
+    }
+    
+    // Add program ages
+    if (selectedProgramAges.length > 0) {
+      params.set("programAges", selectedProgramAges.join(","));
+    }
+    
+    // Add availability
+    if (selectedAvailability.length > 0) {
+      params.set("availability", selectedAvailability.join(","));
+    }
+    
+    // Add ward
+    if (selectedWard) {
+      params.set("ward", selectedWard);
+    }
+    
+    // Add boolean filters
+    if (cwelccParticipating) {
+      params.set("cwelcc", "true");
+    }
+    
+    if (acceptsSubsidy) {
+      params.set("subsidy", "true");
+    }
+    
+    // Add sort (only if not default)
+    if (sortBy !== "name") {
+      params.set("sortBy", sortBy);
+    }
+    if (sortOrder !== "asc") {
+      params.set("sortOrder", sortOrder);
+    }
+    
+    // Add page (only if not page 1)
+    if (currentPage > 1) {
+      params.set("page", currentPage.toString());
+    }
+    
+    // Build the new URL
+    const newUrl = params.toString() ? `/search?${params.toString()}` : "/search";
+    
+    // Get current URL path and search (only on client)
+    // Use searchParams to get current URL instead of window.location to avoid hydration issues
+    const currentUrlPath = searchParams.toString() 
+      ? `/search?${searchParams.toString()}` 
+      : "/search";
+    
+    // Only update URL if it's different from current URL
+    // This prevents clearing URL params when filters are initialized from URL
+    // Compare the parameter sets (order-independent comparison)
+    const currentParamsMap = new Map(searchParams.entries());
+    const newParamsMap = new Map(params.entries());
+    
+    let paramsDiffer = currentParamsMap.size !== newParamsMap.size;
+    if (!paramsDiffer) {
+      for (const [key, value] of newParamsMap) {
+        if (currentParamsMap.get(key) !== value) {
+          paramsDiffer = true;
+          break;
+        }
+      }
+    }
+    
+    if (paramsDiffer) {
+      isUpdatingUrlRef.current = true;
+      router.replace(newUrl, { scroll: false });
+      
+      // Reset flag after a short delay to allow URL to update
+      setTimeout(() => {
+        isUpdatingUrlRef.current = false;
+      }, 100);
+    }
+  }, [
+    filtersInitialized,
+    debouncedSearchQuery,
+    selectedRegion,
+    selectedPriceRange,
+    selectedTypes,
+    selectedAgeRange,
+    selectedProgramAges,
+    selectedAvailability,
+    selectedWard,
+    cwelccParticipating,
+    acceptsSubsidy,
+    sortBy,
+    sortOrder,
+    currentPage,
+    router,
+  ]);
 
   // Check if user has purchased the full report
   // DISABLED: Purchase check endpoint not available
@@ -494,10 +1009,31 @@ export default function SearchPage() {
     }));
   }, [availableTypes]);
 
-  // Reset City/Ward when region changes
+  // Reset City/Ward when region changes (but not on initial load from URL)
   useEffect(() => {
-    setSelectedWard("");
-  }, [selectedRegion]);
+    // On initial load, set the initial region ref and don't clear ward
+    if (initialRegionRef.current === null) {
+      initialRegionRef.current = selectedRegion;
+      return;
+    }
+    
+    // Only clear ward if region actually changed (not on initial load)
+    // This prevents clearing ward when both region and ward are loaded from URL
+    // Also check if filters have been initialized to avoid clearing during URL sync
+    if (
+      filtersInitialized &&
+      initialRegionRef.current !== selectedRegion && 
+      selectedRegion !== "" &&
+      initialRegionRef.current !== ""
+    ) {
+      // Region actually changed (user selected different region), clear ward
+      setSelectedWard("");
+      initialRegionRef.current = selectedRegion;
+    } else if (selectedRegion !== "" && initialRegionRef.current !== selectedRegion) {
+      // Update the ref even if we don't clear ward (for tracking)
+      initialRegionRef.current = selectedRegion;
+    }
+  }, [selectedRegion, filtersInitialized]);
 
   // Fetch daycares with React Query
   const {
@@ -510,42 +1046,17 @@ export default function SearchPage() {
     queryFn: async () => {
       try {
         const searchParams = new URLSearchParams(queryParams);
-        console.log(
-          "🌐 API CALL - Fetching from:",
-          `/api/daycares/search?${searchParams.toString()}`
-        );
         const response = await apiClient.get(
           `/api/daycares/search?${searchParams.toString()}`
         );
 
-        console.log("✅ API SUCCESS - Response received:", {
-          success: response.data.success,
-          dataLength: response.data.data?.length,
-          hasData: !!response.data.data,
-        });
-
         if (response.data.success) {
-          // Debug: Log first daycare to see what data we're getting
-          if (response.data.data && response.data.data.length > 0) {
-            const firstDaycare = response.data.data[0];
-            console.log("🔍 DEBUG - First daycare from API:", {
-              name: firstDaycare.name,
-              price: firstDaycare.price,
-              priceType: typeof firstDaycare.price,
-              priceString: firstDaycare.priceString,
-              priceStringType: typeof firstDaycare.priceString,
-              hasPriceString: !!firstDaycare.priceString,
-              fullData: firstDaycare,
-            });
-          }
           return response.data;
         } else {
           throw new Error("Invalid data format received");
         }
       } catch (err) {
         // Fallback to local data if API fails
-        console.error("❌ API FAILED - Using local fallback:", err);
-        console.warn("API fetch failed, using local data:", err);
         // For fallback, we'll return a mock response structure
         const filtered = (daycaresLocalData as Daycare[]).slice(
           (currentPage - 1) * resultsPerPage,
@@ -598,7 +1109,6 @@ export default function SearchPage() {
           throw new Error("Invalid data format received");
         }
       } catch (err) {
-        console.warn("API fetch failed for map view:", err);
         return {
           success: true,
           data: [],
@@ -625,20 +1135,6 @@ export default function SearchPage() {
       ...daycare,
       id: daycare._id || daycare.id || "",
     }));
-    // Debug: Log all daycares to see priceString
-    if (transformedData.length > 0) {
-      console.log(
-        "📊 ALL DAYCARES DATA:",
-        transformedData.map((d: Daycare) => ({
-          name: d.name,
-          price: d.price,
-          priceString: d.priceString,
-          hasPriceString: !!d.priceString,
-          priceStringValue: d.priceString,
-          id: d.id,
-        }))
-      );
-    }
     return transformedData;
   }, [daycaresResponse?.data]);
   const paginationMeta = daycaresResponse?.metadata?.pagination;
@@ -739,9 +1235,10 @@ export default function SearchPage() {
     // If guest user, redirect to login instead of changing page
     if (isGuest) {
       const currentUrl = window.location.pathname + window.location.search;
-      window.location.href = `/login?redirect=${encodeURIComponent(
-        currentUrl
-      )}`;
+      // Save search URL to localStorage as backup
+      saveRedirectUrl(currentUrl);
+      // Redirect - redirect parameter in URL is primary, localStorage is backup
+      window.location.href = `/login?redirect=${encodeURIComponent(currentUrl)}`;
       return;
     }
 
@@ -774,6 +1271,9 @@ export default function SearchPage() {
       } else {
         // For guest users, redirect to login
         const currentUrl = window.location.pathname + window.location.search;
+        // Save search URL to localStorage as backup
+        saveRedirectUrl(currentUrl);
+        // Redirect - redirect parameter in URL is primary, localStorage is backup
         window.location.href = `/login?redirect=${encodeURIComponent(currentUrl)}`;
       }
     },
@@ -812,8 +1312,22 @@ export default function SearchPage() {
 
   const handleContactProvider = (daycare: Daycare) => {
     // Implement contact functionality
-    console.log("Contacting provider:", daycare.name);
   };
+
+  // Handle add contact log - check auth first
+  const handleAddContactLog = useCallback(() => {
+    if (!user || authLoading) {
+      // Guest user - save URL and redirect to login
+      const currentUrl = window.location.pathname + window.location.search;
+      // Save search URL to localStorage as backup
+      saveRedirectUrl(currentUrl);
+      // Redirect - redirect parameter in URL is primary, localStorage is backup
+      window.location.href = `/login?redirect=${encodeURIComponent(currentUrl)}`;
+      return;
+    }
+    // Logged in user - open modal
+    setShowContactLogModal(true);
+  }, [user, authLoading, saveRedirectUrl]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleMessageProvider = (daycare: Daycare) => {
@@ -822,8 +1336,16 @@ export default function SearchPage() {
   };
 
   const handleViewDetails = (daycare: Daycare) => {
-    // Navigate to detail page
-    window.location.href = `/daycare/${daycare.id}`;
+    // Save current search URL to sessionStorage before navigating
+    // This allows us to restore it when user clicks back
+    const currentSearchUrl = window.location.pathname + window.location.search;
+    try {
+      sessionStorage.setItem("lastSearchUrl", currentSearchUrl);
+    } catch (error) {
+      // Silent fail - will rely on browser history
+    }
+    // Use Next.js router to preserve browser history
+    router.push(`/daycare/${daycare.id}`);
   };
 
   const addToRecentlyViewed = (daycare: Daycare) => {
@@ -1028,7 +1550,7 @@ export default function SearchPage() {
                 expandedSections={expandedSections}
                 setExpandedSections={setExpandedSections}
                 displayedDaycaresLength={displayedDaycares.length}
-                onAddContactLog={() => setShowContactLogModal(true)}
+                onAddContactLog={handleAddContactLog}
                 typeOptions={
                   selectedRegion || selectedWard ? typeOptions : undefined
                 }
@@ -1096,5 +1618,31 @@ export default function SearchPage() {
         onClose={() => setShowContactLogModal(false)}
       />
     </>
+  );
+}
+
+// Loading fallback component
+function SearchPageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading search page...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Export wrapped component with Suspense boundary
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchPageLoading />}>
+      <SearchPageContent />
+    </Suspense>
   );
 }

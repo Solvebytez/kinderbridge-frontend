@@ -256,17 +256,6 @@ export default function SearchResults({
                 )}
 
                 {displayedDaycares.map((daycare) => {
-                  // Debug logging for each daycare
-                  console.log("🏫 Daycare data in SearchResults:", {
-                    id: daycare.id,
-                    name: daycare.name,
-                    price: daycare.price,
-                    priceType: typeof daycare.price,
-                    priceString: daycare.priceString,
-                    priceStringType: typeof daycare.priceString,
-                    fullDaycare: daycare
-                  });
-                  
                   return (
                   <motion.div
                     key={daycare.id}
@@ -519,14 +508,26 @@ export default function SearchResults({
                     <UserPlus className="h-5 w-5" />
                     <span>Sign Up Free</span>
                   </Link>
-                  <Link
-                    href={`/login?returnTo=search&params=${encodeURIComponent(
-                      window.location.search.substring(1)
-                    )}`}
+                  <button
+                    onClick={() => {
+                      const currentUrl = window.location.pathname + window.location.search;
+                      // Save to localStorage as backup (redirect parameter in URL is primary)
+                      try {
+                        localStorage.setItem("searchRedirectUrl", currentUrl);
+                        // Verify save worked
+                        if (localStorage.getItem("searchRedirectUrl") !== currentUrl) {
+                          localStorage.setItem("searchRedirectUrl", currentUrl);
+                        }
+                      } catch (error) {
+                        // localStorage might be disabled - redirect parameter will still work
+                      }
+                      // Redirect immediately - localStorage.setItem is synchronous
+                      window.location.href = `/login?redirect=${encodeURIComponent(currentUrl)}`;
+                    }}
                     className="border-2 border-orange-300 text-orange-700 hover:bg-orange-50 px-8 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
                   >
                     <span>Already have an account? Sign In</span>
-                  </Link>
+                  </button>
                 </div>
 
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">

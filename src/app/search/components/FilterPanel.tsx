@@ -214,7 +214,9 @@ export default function FilterPanel({
   // Helper function to format type string to label
   const formatTypeLabel = (typeValue: string): string => {
     // Try to find a matching label from default options for better formatting
-    const defaultOption = DEFAULT_TYPE_OPTIONS.find((opt) => opt.value === typeValue);
+    const defaultOption = DEFAULT_TYPE_OPTIONS.find(
+      (opt) => opt.value === typeValue
+    );
     if (defaultOption) {
       return defaultOption.label;
     }
@@ -226,12 +228,13 @@ export default function FilterPanel({
   };
 
   // Use dynamic typeOptions if provided, otherwise use default static options
-  const TYPE_OPTIONS = typeOptions && typeOptions.length > 0
-    ? typeOptions.map((type) => ({
-        value: type.value,
-        label: type.label || formatTypeLabel(type.value),
-      }))
-    : DEFAULT_TYPE_OPTIONS;
+  const TYPE_OPTIONS =
+    typeOptions && typeOptions.length > 0
+      ? typeOptions.map((type) => ({
+          value: type.value,
+          label: type.label || formatTypeLabel(type.value),
+        }))
+      : DEFAULT_TYPE_OPTIONS;
 
   const toggleSection = useCallback(
     (section: keyof typeof expandedSections) => {
@@ -354,13 +357,22 @@ export default function FilterPanel({
             </label>
             <div className="relative">
               <select
-                value={selectedRegion}
+                value={selectedRegion || ""}
                 onChange={(e) => setSelectedRegion(e.target.value)}
                 className={`w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none bg-white ${
                   selectedRegion ? "text-gray-900" : "text-gray-400"
                 }`}
               >
                 <option value="">Select region</option>
+                {/* Always show the selected region value even if regions haven't loaded yet */}
+                {selectedRegion && !regions.includes(selectedRegion) && (
+                  <option
+                    key={`selected-${selectedRegion}`}
+                    value={selectedRegion}
+                  >
+                    {selectedRegion}
+                  </option>
+                )}
                 {regions.map((r) => (
                   <option key={r} value={r}>
                     {r}
@@ -388,6 +400,13 @@ export default function FilterPanel({
                 <option value="">
                   {selectedRegion ? "Select city/ward" : "Select region first"}
                 </option>
+                {/* Always show the selected ward value even if options haven't loaded yet */}
+                {/* This ensures the select shows the value immediately, even before options load */}
+                {selectedWard && !cityWardOptions.includes(selectedWard) && (
+                  <option key={`selected-${selectedWard}`} value={selectedWard}>
+                    {selectedWard}
+                  </option>
+                )}
                 {cityWardOptions.map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
@@ -760,10 +779,9 @@ export default function FilterPanel({
         )}
       </div>
 
-      {/* Contact Log Card Group - Only show when user is logged in */}
-      {user && !authLoading && (
-        <div className="mb-6">
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+      {/* Contact Log Card Group - Always visible for all users */}
+      <div className="mb-6">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <FileText className="h-5 w-5 text-gray-600 mr-2" />
@@ -771,16 +789,60 @@ export default function FilterPanel({
                 Contact Log
               </h3>
             </div>
-            <button
-              onClick={onAddContactLog}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 border border-blue-500 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              + Add Log
-            </button>
+            {user && !authLoading && (
+              <button
+                onClick={onAddContactLog}
+                className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 border border-blue-500 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                + Add Log
+              </button>
+            )}
           </div>
 
-          {/* Contact Logs List or Empty State */}
-          {isLoadingContactLogs ? (
+          {/* Show different content based on login status */}
+          {!user || authLoading ? (
+            /* Not logged in - Show login prompt */
+            <div className="text-center py-8">
+              <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <FileText
+                  className="h-16 w-16 text-gray-300"
+                  strokeWidth={1.5}
+                />
+              </div>
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                Track your daycare communications
+              </p>
+              <p className="text-xs text-gray-500 mb-4">
+                Sign in to start logging your contacts with daycares
+              </p>
+              <button
+                onClick={() => {
+                  const currentUrl =
+                    window.location.pathname + window.location.search;
+                  // Save to localStorage as backup (redirect parameter in URL is primary)
+                  try {
+                    localStorage.setItem("searchRedirectUrl", currentUrl);
+                    // Verify save worked
+                    if (
+                      localStorage.getItem("searchRedirectUrl") !== currentUrl
+                    ) {
+                      localStorage.setItem("searchRedirectUrl", currentUrl);
+                    }
+                  } catch (error) {
+                    // localStorage might be disabled - redirect parameter will still work
+                  }
+                  // Redirect immediately - localStorage.setItem is synchronous
+                  window.location.href = `/login?redirect=${encodeURIComponent(
+                    currentUrl
+                  )}`;
+                }}
+                className="inline-block px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Sign In to Continue
+              </button>
+            </div>
+          ) : isLoadingContactLogs ? (
+            /* Logged in - Loading state */
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-green-600 border-t-transparent"></div>
               <p className="text-xs text-gray-500 mt-2">
@@ -788,6 +850,7 @@ export default function FilterPanel({
               </p>
             </div>
           ) : latestContactLogs.length === 0 ? (
+            /* Logged in - Empty state */
             <div className="text-center py-8">
               <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <FileText
@@ -809,6 +872,7 @@ export default function FilterPanel({
               </button>
             </div>
           ) : (
+            /* Logged in - Show contact logs */
             <div className="space-y-3">
               {latestContactLogs.map((log) => (
                 <div
@@ -843,10 +907,17 @@ export default function FilterPanel({
                   </p>
 
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(log.createdAt)}</span>
-                    </div>
+                    {log.followUpDate ? (
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDate(log.followUpDate)}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1 text-gray-400">
+                        <Calendar className="h-3 w-3" />
+                        <span>No follow-up date</span>
+                      </div>
+                    )}
                     {log.outcome && (
                       <span className="text-green-600 font-medium truncate ml-2">
                         {log.outcome}
@@ -873,8 +944,7 @@ export default function FilterPanel({
             </div>
           )}
         </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
