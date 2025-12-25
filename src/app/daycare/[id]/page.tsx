@@ -145,6 +145,26 @@ export default function DaycareDetailPage({
     getParams();
   }, [params]);
 
+  // Helper function to save URL to localStorage reliably
+  const saveRedirectUrl = (url: string): boolean => {
+    try {
+      // Try to save
+      localStorage.setItem("searchRedirectUrl", url);
+      // Verify it was saved correctly
+      const saved = localStorage.getItem("searchRedirectUrl");
+      if (saved === url) {
+        return true;
+      }
+      // If verification failed, try one more time
+      localStorage.setItem("searchRedirectUrl", url);
+      const savedAgain = localStorage.getItem("searchRedirectUrl");
+      return savedAgain === url;
+    } catch (error) {
+      // localStorage might be disabled or full
+      return false;
+    }
+  };
+
   const toggleFavorite = () => {
     if (user) {
       // For logged-in users, use API
@@ -154,8 +174,11 @@ export default function DaycareDetailPage({
         addFavoriteAPI(id);
       }
     } else {
-      // For guest users, redirect to login
-      const currentUrl = window.location.pathname;
+      // For guest users, save URL and redirect to login
+      const currentUrl = window.location.pathname + window.location.search;
+      // Save to localStorage as backup (redirect parameter in URL is primary)
+      saveRedirectUrl(currentUrl);
+      // Redirect - redirect parameter in URL is primary, localStorage is backup
       window.location.href = `/login?redirect=${encodeURIComponent(currentUrl)}`;
     }
   };
@@ -310,9 +333,10 @@ export default function DaycareDetailPage({
                 <div className="text-3xl font-bold text-green-600 mb-2">
                   {formatDaycarePrice(daycare.price, daycare.priceString)}
                 </div>
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                {/* Contact Provider button - temporarily hidden */}
+                {/* <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                   Contact Provider
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
