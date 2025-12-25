@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -20,7 +20,9 @@ export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get dashboard URL based on user type
   const getDashboardUrl = () => {
@@ -47,6 +49,32 @@ export default function Navigation() {
       return pathname === "/";
     }
     return pathname.startsWith(href);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    if (isUserDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isUserDropdownOpen]);
+
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsUserDropdownOpen(false);
+    const dashboardUrl = getDashboardUrl();
+    router.push(dashboardUrl);
   };
 
   return (
@@ -89,7 +117,7 @@ export default function Navigation() {
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                   className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors max-w-48"
@@ -122,14 +150,13 @@ export default function Navigation() {
                         {user.email}
                       </p>
                     </div>
-                    <Link
-                      href={getDashboardUrl()}
-                      className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      onClick={() => setIsUserDropdownOpen(false)}
+                    <button
+                      onClick={handleDashboardClick}
+                      className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full text-left"
                     >
                       <UserIcon className="h-4 w-4" />
                       <span>Dashboard</span>
-                    </Link>
+                    </button>
                     <button
                       onClick={() => {
                         logout();
@@ -217,14 +244,18 @@ export default function Navigation() {
                       {user.email}
                     </p>
                   </div>
-                  <Link
-                    href={getDashboardUrl()}
-                    className="flex items-center space-x-2 px-3 py-3 text-base font-medium text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-                    onClick={() => setIsOpen(false)}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsOpen(false);
+                      const dashboardUrl = getDashboardUrl();
+                      router.push(dashboardUrl);
+                    }}
+                    className="flex items-center space-x-2 px-3 py-3 text-base font-medium text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-colors w-full text-left"
                   >
                     <UserIcon className="h-5 w-5" />
                     <span>Dashboard</span>
-                  </Link>
+                  </button>
                   <button
                     onClick={() => {
                       logout();
