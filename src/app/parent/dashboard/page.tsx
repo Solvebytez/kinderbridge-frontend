@@ -43,6 +43,7 @@ interface Application {
   image: string;
   status: "pending" | "accepted" | "rejected";
   appliedDate: string;
+  hasFollowUpDate?: boolean; // Flag to indicate if we're showing followup date
 }
 
 export default function ParentDashboard() {
@@ -291,7 +292,8 @@ export default function ParentDashboard() {
         price,
         image: (daycare?.image as string | undefined) || "/api/placeholder/400/300",
         status,
-        appliedDate: log.createdAt,
+        appliedDate: log.followUpDate || log.createdAt, // Use followUpDate if available, otherwise fallback to createdAt
+        hasFollowUpDate: !!log.followUpDate, // Flag to indicate if we're showing followup date
       };
     });
   }, [contactLogs]);
@@ -766,7 +768,7 @@ export default function ParentDashboard() {
                           </div>
                           <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500 mb-3">
                             <span>
-                              Contacted:{" "}
+                              {application.hasFollowUpDate ? "Follow up: " : "Contacted: "}
                               {new Date(
                                 application.appliedDate
                               ).toLocaleDateString()}

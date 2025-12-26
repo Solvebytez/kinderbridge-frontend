@@ -315,7 +315,7 @@ function SearchPageContent() {
     if (region) {
       const decodedRegion = decodeURIComponent(region.replace(/\+/g, " ")).trim();
       setSelectedRegion(decodedRegion);
-    }
+      }
     
     // Read price range
     const priceRange = params.get("priceRange");
@@ -1027,7 +1027,7 @@ function SearchPageContent() {
       initialRegionRef.current !== ""
     ) {
       // Region actually changed (user selected different region), clear ward
-      setSelectedWard("");
+    setSelectedWard("");
       initialRegionRef.current = selectedRegion;
     } else if (selectedRegion !== "" && initialRegionRef.current !== selectedRegion) {
       // Update the ref even if we don't clear ward (for tracking)

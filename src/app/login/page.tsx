@@ -151,10 +151,10 @@ export default function LoginPage() {
         
         // Fallback 2: Check if there are original search parameters to preserve
         if (!redirectUrl) {
-          const originalParams = urlParams.get("params");
-          if (originalParams) {
+        const originalParams = urlParams.get("params");
+        if (originalParams) {
             redirectUrl = `/search?${originalParams}`;
-          } else {
+        } else {
             redirectUrl = "/search";
           }
         }

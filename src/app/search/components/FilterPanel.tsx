@@ -910,12 +910,12 @@ export default function FilterPanel({
                     {log.followUpDate ? (
                       <div className="flex items-center space-x-1">
                         <Calendar className="h-3 w-3" />
-                        <span>{formatDate(log.followUpDate)}</span>
+                        <span>Follow up: {formatDate(log.followUpDate)}</span>
                       </div>
                     ) : (
-                      <div className="flex items-center space-x-1 text-gray-400">
+                      <div className="flex items-center space-x-1">
                         <Calendar className="h-3 w-3" />
-                        <span>No follow-up date</span>
+                        <span>Contacted: {formatDate(log.createdAt)}</span>
                       </div>
                     )}
                     {log.outcome && (
