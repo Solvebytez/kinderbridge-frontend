@@ -327,7 +327,11 @@ export default function DaycareDetailPage({
                     <span>{daycare.distance} km away</span>
                   </div>
                 </div>
-                <p className="text-gray-700 text-lg">{daycare.description}</p>
+                {daycare.description &&
+                  daycare.description !== "NO" &&
+                  daycare.description.trim() !== "" && (
+                    <p className="text-gray-700 text-lg">{daycare.description}</p>
+                  )}
               </div>
               <div className="lg:ml-6 mt-4 lg:mt-0">
                 <div className="text-3xl font-bold text-green-600 mb-2">
