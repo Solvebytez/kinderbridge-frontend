@@ -150,7 +150,7 @@ export default function ContactLogDetailsModal({
                       href={`/daycare/${daycareId}`}
                       className="inline-flex items-center mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
                     >
-                      View KinderBridge Details →
+                      View Daycare Details →
                     </Link>
                   )}
                 </div>
