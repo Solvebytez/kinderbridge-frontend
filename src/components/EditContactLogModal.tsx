@@ -8,6 +8,7 @@ import {
   UserIcon,
   BuildingOfficeIcon,
   MapPinIcon,
+  HeartIcon,
 } from "@heroicons/react/24/outline";
 import { useContactLogs } from "@/hooks/useContactLogs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatDaycarePrice } from "@/utils/priceFormatter";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface ContactLog {
   _id: string;
@@ -57,6 +59,7 @@ const PURPOSES = [
   "Follow-up",
   "Application Status",
   "Schedule Visit",
+  "Registered into Waitlist",
   "Question",
   "Other",
 ];
@@ -81,6 +84,7 @@ export default function EditContactLogModal({
 }: EditContactLogModalProps) {
   const { user } = useAuth();
   const { updateContactLog, isUpdatingContactLog } = useContactLogs();
+  const { favorites } = useFavorites();
 
   const [formData, setFormData] = useState({
     daycareId: "",
@@ -138,10 +142,48 @@ export default function EditContactLogModal({
       staleTime: 1 * 60 * 1000,
     });
 
+  // Get favorite IDs
+  const favoriteIds = useMemo(() => {
+    return favorites.map(
+      (fav) => fav.daycareId || fav.daycare?._id || fav.daycare?.id || ""
+    );
+  }, [favorites]);
+
   // Use search results if available, otherwise use default results
-  const daycares: Daycare[] = debouncedSearchQuery.trim()
-    ? searchDaycaresResponse?.data || []
-    : defaultDaycaresResponse?.data || [];
+  // For default results, show favorites first
+  const daycares: Daycare[] = useMemo(() => {
+    if (debouncedSearchQuery.trim()) {
+      // For search results, return as-is
+      return searchDaycaresResponse?.data || [];
+    } else {
+      // For default results, sort to show favorites first
+      const defaultDaycares = defaultDaycaresResponse?.data || [];
+      if (favoriteIds.length === 0 || defaultDaycares.length === 0) {
+        return defaultDaycares;
+      }
+
+      // Separate favorites and non-favorites
+      const favoritesList: Daycare[] = [];
+      const nonFavoritesList: Daycare[] = [];
+
+      defaultDaycares.forEach((daycare) => {
+        const daycareId = daycare._id || daycare.id;
+        if (favoriteIds.includes(daycareId)) {
+          favoritesList.push(daycare);
+        } else {
+          nonFavoritesList.push(daycare);
+        }
+      });
+
+      // Combine: favorites first, then non-favorites
+      return [...favoritesList, ...nonFavoritesList];
+    }
+  }, [
+    debouncedSearchQuery,
+    searchDaycaresResponse?.data,
+    defaultDaycaresResponse?.data,
+    favoriteIds,
+  ]);
 
   const isLoadingDaycares = debouncedSearchQuery.trim()
     ? isSearchingDaycares
@@ -397,7 +439,7 @@ export default function EditContactLogModal({
               <div className="relative daycare-dropdown-container">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <BuildingOfficeIcon className="h-4 w-4 inline mr-2" />
-                  Select KinderBridge <span className="text-red-500">*</span>
+                  Select Daycare <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -414,7 +456,7 @@ export default function EditContactLogModal({
                       setShowDaycareDropdown(true);
                     }}
                     disabled={isUpdatingContactLog}
-                    placeholder="Search for a KinderBridge location..."
+                    placeholder="Search for a Daycare"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     required
                   />
@@ -454,13 +496,13 @@ export default function EditContactLogModal({
                         <div className="px-6 py-8 text-center text-gray-500">
                           {debouncedSearchQuery.trim() ? (
                             <p>
-                              No KinderBridge locations found. Try a different
+                              No Daycare locations found. Try a different
                               search term.
                             </p>
                           ) : (
                             <>
                               <BuildingOfficeIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                              <p>No KinderBridge locations available.</p>
+                              <p>No Daycare locations available.</p>
                             </>
                           )}
                         </div>
@@ -475,9 +517,17 @@ export default function EditContactLogModal({
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-gray-900 mb-1.5 text-base truncate">
-                                    {daycare.name}
-                                  </h4>
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <h4 className="font-semibold text-gray-900 text-base truncate">
+                                      {daycare.name}
+                                    </h4>
+                                    {favoriteIds.includes(daycare._id || daycare.id) && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200 flex-shrink-0">
+                                        <HeartIcon className="h-3 w-3 fill-red-600" />
+                                        Favorite
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-2">
                                     {(daycare.address || daycare.city) && (
                                       <div className="flex items-center space-x-1">
