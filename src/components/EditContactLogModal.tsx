@@ -166,7 +166,7 @@ export default function EditContactLogModal({
       const favoritesList: Daycare[] = [];
       const nonFavoritesList: Daycare[] = [];
 
-      defaultDaycares.forEach((daycare) => {
+      defaultDaycares.forEach((daycare: Daycare) => {
         const daycareId = daycare._id || daycare.id;
         if (favoriteIds.includes(daycareId)) {
           favoritesList.push(daycare);
